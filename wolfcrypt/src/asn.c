@@ -25786,7 +25786,7 @@ int PemToDer(const unsigned char* buff, long longSz, int type,
                 #endif
 
                     /* Extract hash type from PBES2 parameters */
-                    word32 idx = 0;
+                    idx = 0;
                     int hashType;
                     DECL_ASNGETDATA(dataASN, pbes2ParamsASN_Length);
                     CALLOC_ASNGETDATA(dataASN, pbes2ParamsASN_Length, ret, NULL);
