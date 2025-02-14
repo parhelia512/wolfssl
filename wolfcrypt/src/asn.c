@@ -25785,8 +25785,27 @@ int PemToDer(const unsigned char* buff, long longSz, int type,
                     int     padVal = 0;
                 #endif
 
-                    ret = wc_BufferKeyDecrypt(info, der->buffer, der->length,
-                        (byte*)password, passwordSz, WC_MD5);
+                    /* Extract hash type from PBES2 parameters */
+                    word32 idx = 0;
+                    int hashType;
+                    DECL_ASNGETDATA(dataASN, pbes2ParamsASN_Length);
+                    CALLOC_ASNGETDATA(dataASN, pbes2ParamsASN_Length, ret, NULL);
+                    if (ret == 0) {
+                        GetASN_OID(&dataASN[PBES2PARAMSASN_IDX_PBKDF2_PARAMS_PRF_OID], oidHmacType);
+                        ret = GetASN_Items(pbes2ParamsASN, dataASN, pbes2ParamsASN_Length,
+                                         0, der->buffer, &idx, der->length);
+                        if (ret == 0) {
+                            hashType = wc_OidGetHash(dataASN[PBES2PARAMSASN_IDX_PBKDF2_PARAMS_PRF_OID].data.oid.sum);
+                            if (hashType == WC_HASH_TYPE_NONE) {
+                                WOLFSSL_MSG("Hash algorithm not supported");
+                                ret = ASN_PARSE_E;
+                            }
+                        }
+                    }
+                    FREE_ASNGETDATA(dataASN, NULL);
+                    if (ret == 0)
+                        ret = wc_BufferKeyDecrypt(info, der->buffer, der->length,
+                            (byte*)password, passwordSz, hashType);
 
 #ifndef NO_WOLFSSL_SKIP_TRAILING_PAD
                 #ifndef NO_DES3
