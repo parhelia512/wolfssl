@@ -66,3 +66,7 @@ extern int testDevId;
 
 #endif /* WOLFCRYPT_TEST_API_H */
 
+extern int test_wc_AesXtsSetKey(void);
+extern int test_wc_AesXtsEncryptDecrypt(void);
+extern int test_wc_AesXtsSectorEncryptDecrypt(void);
+extern int test_wc_AesXtsStreamEncryptDecrypt(void);

@@ -311,6 +311,7 @@
 #include <tests/api/test_arc4.h>
 #include <tests/api/test_rc2.h>
 #include <tests/api/test_aes.h>
+#include <tests/api/test_aes_xts.h>
 #include <tests/api/test_ascon.h>
 #include <tests/api/test_sm4.h>
 #include <tests/api/test_wc_encrypt.h>

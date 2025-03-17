@@ -36,8 +36,9 @@
 #endif
 
 #include <wolfssl/wolfcrypt/aes.h>
-#include <wolfssl/wolfcrypt/wc_encrypt.h>
-#include <wolfssl/wolfcrypt/types.h>
+#include <wolfssl/wolfcrypt/error-crypt.h>
+#include <wolfssl/wolfcrypt/logging.h>
+#include <wolfssl/wolfcrypt/port/caam/wolfcaam.h>
 #include <tests/unit.h>
 #include <tests/api/api.h>
 #include <tests/api/test_aes_xts.h>
@@ -45,8 +46,6 @@
 /*******************************************************************************
  * AES-XTS
  ******************************************************************************/
-
-#ifdef WOLFSSL_AES_XTS
 
 /*
  * Testing function for wc_AesXtsSetKey().
@@ -95,10 +94,11 @@ int test_wc_AesXtsSetKey(void)
     ExpectIntEQ(wc_AesXtsSetKey(&aes, NULL, sizeof(key32), AES_ENCRYPTION, 
                                NULL, INVALID_DEVID), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    /* For bad key size, the error is BAD_LENGTH_E not BAD_FUNC_ARG */
     ExpectIntEQ(wc_AesXtsSetKey(&aes, badKey, sizeof(badKey), AES_ENCRYPTION, 
                                NULL, INVALID_DEVID), 
-                WC_NO_ERR_TRACE(WC_KEY_SIZE_E));
-    ExpectIntEQ(wc_AesXtsSetKey(&aes, key32, sizeof(key32), 999, 
+                WC_NO_ERR_TRACE(BAD_LENGTH_E));
+    ExpectIntEQ(wc_AesXtsSetKey(&aes, key32, sizeof(key32), -1, 
                                NULL, INVALID_DEVID), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
 
@@ -121,65 +121,72 @@ int test_wc_AesXtsEncryptDecrypt(void)
         0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
         0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66
     };
-    byte plaintext[] = { /* Now is the time for all good men w/o trailing 0 */
-        0x4e, 0x6f, 0x77, 0x20, 0x69, 0x73, 0x20, 0x74,
-        0x68, 0x65, 0x20, 0x74, 0x69, 0x6d, 0x65, 0x20,
-        0x66, 0x6f, 0x72, 0x20, 0x61, 0x6c, 0x6c, 0x20,
-        0x67, 0x6f, 0x6f, 0x64, 0x20, 0x6d, 0x65, 0x6e
-    };
     byte tweak[] = {
-        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
-        0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00
+        0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+        0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66
     };
-    byte ciphertext[sizeof(plaintext)];
-    byte decrypted[sizeof(plaintext)];
-
-    /* Init stack variables */
-    XMEMSET(ciphertext, 0, sizeof(ciphertext));
-    XMEMSET(decrypted, 0, sizeof(decrypted));
+    byte plaintext[32] = {
+        0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96,
+        0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a,
+        0xae, 0x2d, 0x8a, 0x57, 0x1e, 0x03, 0xac, 0x9c,
+        0x9e, 0xb7, 0x6f, 0xac, 0x45, 0xaf, 0x8e, 0x51
+    };
+    byte ciphertext[32];
+    byte decrypted[32];
 
     /* Initialize */
+    XMEMSET(ciphertext, 0, sizeof(ciphertext));
+    XMEMSET(decrypted, 0, sizeof(decrypted));
+    
     ExpectIntEQ(wc_AesXtsInit(&aes, NULL, INVALID_DEVID), 0);
 
     /* Test encryption */
     ExpectIntEQ(wc_AesXtsSetKey(&aes, key32, sizeof(key32), AES_ENCRYPTION, 
                                NULL, INVALID_DEVID), 0);
-    ExpectIntEQ(wc_AesXtsEncrypt(&aes, ciphertext, plaintext, 
-                                sizeof(plaintext), tweak, sizeof(tweak)), 0);
+    ExpectIntEQ(wc_AesXtsEncrypt(&aes, ciphertext, plaintext, sizeof(plaintext), 
+                                tweak, sizeof(tweak)), 0);
 
     /* Test decryption */
     ExpectIntEQ(wc_AesXtsSetKey(&aes, key32, sizeof(key32), AES_DECRYPTION, 
                                NULL, INVALID_DEVID), 0);
-    ExpectIntEQ(wc_AesXtsDecrypt(&aes, decrypted, ciphertext, 
-                                sizeof(ciphertext), tweak, sizeof(tweak)), 0);
+    ExpectIntEQ(wc_AesXtsDecrypt(&aes, decrypted, ciphertext, sizeof(ciphertext), 
+                                tweak, sizeof(tweak)), 0);
+    
+    /* Verify decryption */
     ExpectIntEQ(XMEMCMP(plaintext, decrypted, sizeof(plaintext)), 0);
 
-    /* Test bad args for encryption */
-    ExpectIntEQ(wc_AesXtsEncrypt(NULL, ciphertext, plaintext, 
-                                sizeof(plaintext), tweak, sizeof(tweak)), 
+    /* Test bad args */
+    ExpectIntEQ(wc_AesXtsEncrypt(NULL, ciphertext, plaintext, sizeof(plaintext), 
+                                tweak, sizeof(tweak)), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
-    ExpectIntEQ(wc_AesXtsEncrypt(&aes, NULL, plaintext, 
-                                sizeof(plaintext), tweak, sizeof(tweak)), 
+    ExpectIntEQ(wc_AesXtsEncrypt(&aes, NULL, plaintext, sizeof(plaintext), 
+                                tweak, sizeof(tweak)), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
-    ExpectIntEQ(wc_AesXtsEncrypt(&aes, ciphertext, NULL, 
-                                sizeof(plaintext), tweak, sizeof(tweak)), 
+    ExpectIntEQ(wc_AesXtsEncrypt(&aes, ciphertext, NULL, sizeof(plaintext), 
+                                tweak, sizeof(tweak)), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
-    ExpectIntEQ(wc_AesXtsEncrypt(&aes, ciphertext, plaintext, 
-                                sizeof(plaintext), NULL, sizeof(tweak)), 
+    ExpectIntEQ(wc_AesXtsEncrypt(&aes, ciphertext, plaintext, 0, 
+                                tweak, sizeof(tweak)), 
+                WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    ExpectIntEQ(wc_AesXtsEncrypt(&aes, ciphertext, plaintext, sizeof(plaintext), 
+                                NULL, sizeof(tweak)), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
 
-    /* Test bad args for decryption */
-    ExpectIntEQ(wc_AesXtsDecrypt(NULL, decrypted, ciphertext, 
-                                sizeof(ciphertext), tweak, sizeof(tweak)), 
+    /* Test bad args for decrypt */
+    ExpectIntEQ(wc_AesXtsDecrypt(NULL, decrypted, ciphertext, sizeof(ciphertext), 
+                                tweak, sizeof(tweak)), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
-    ExpectIntEQ(wc_AesXtsDecrypt(&aes, NULL, ciphertext, 
-                                sizeof(ciphertext), tweak, sizeof(tweak)), 
+    ExpectIntEQ(wc_AesXtsDecrypt(&aes, NULL, ciphertext, sizeof(ciphertext), 
+                                tweak, sizeof(tweak)), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
-    ExpectIntEQ(wc_AesXtsDecrypt(&aes, decrypted, NULL, 
-                                sizeof(ciphertext), tweak, sizeof(tweak)), 
+    ExpectIntEQ(wc_AesXtsDecrypt(&aes, decrypted, NULL, sizeof(ciphertext), 
+                                tweak, sizeof(tweak)), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
-    ExpectIntEQ(wc_AesXtsDecrypt(&aes, decrypted, ciphertext, 
-                                sizeof(ciphertext), NULL, sizeof(tweak)), 
+    ExpectIntEQ(wc_AesXtsDecrypt(&aes, decrypted, ciphertext, 0, 
+                                tweak, sizeof(tweak)), 
+                WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    ExpectIntEQ(wc_AesXtsDecrypt(&aes, decrypted, ciphertext, sizeof(ciphertext), 
+                                NULL, sizeof(tweak)), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
 
     wc_AesXtsFree(&aes);
@@ -201,37 +208,39 @@ int test_wc_AesXtsSectorEncryptDecrypt(void)
         0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
         0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66
     };
-    byte plaintext[] = { /* Now is the time for all good men w/o trailing 0 */
-        0x4e, 0x6f, 0x77, 0x20, 0x69, 0x73, 0x20, 0x74,
-        0x68, 0x65, 0x20, 0x74, 0x69, 0x6d, 0x65, 0x20,
-        0x66, 0x6f, 0x72, 0x20, 0x61, 0x6c, 0x6c, 0x20,
-        0x67, 0x6f, 0x6f, 0x64, 0x20, 0x6d, 0x65, 0x6e
-    };
+    byte plaintext[512];
+    byte ciphertext[512];
+    byte decrypted[512];
     word64 sector = 0x1234567890ABCDEF;
-    byte ciphertext[sizeof(plaintext)];
-    byte decrypted[sizeof(plaintext)];
+    int i;
 
-    /* Init stack variables */
-    XMEMSET(ciphertext, 0, sizeof(ciphertext));
-    XMEMSET(decrypted, 0, sizeof(decrypted));
+    /* Fill plaintext with pattern */
+    for (i = 0; i < (int)sizeof(plaintext); i++) {
+        plaintext[i] = (byte)i;
+    }
 
     /* Initialize */
+    XMEMSET(ciphertext, 0, sizeof(ciphertext));
+    XMEMSET(decrypted, 0, sizeof(decrypted));
+    
     ExpectIntEQ(wc_AesXtsInit(&aes, NULL, INVALID_DEVID), 0);
 
-    /* Test sector encryption */
+    /* Test encryption */
     ExpectIntEQ(wc_AesXtsSetKey(&aes, key32, sizeof(key32), AES_ENCRYPTION, 
                                NULL, INVALID_DEVID), 0);
     ExpectIntEQ(wc_AesXtsEncryptSector(&aes, ciphertext, plaintext, 
                                       sizeof(plaintext), sector), 0);
 
-    /* Test sector decryption */
+    /* Test decryption */
     ExpectIntEQ(wc_AesXtsSetKey(&aes, key32, sizeof(key32), AES_DECRYPTION, 
                                NULL, INVALID_DEVID), 0);
     ExpectIntEQ(wc_AesXtsDecryptSector(&aes, decrypted, ciphertext, 
                                       sizeof(ciphertext), sector), 0);
+    
+    /* Verify decryption */
     ExpectIntEQ(XMEMCMP(plaintext, decrypted, sizeof(plaintext)), 0);
 
-    /* Test bad args for sector encryption */
+    /* Test bad args */
     ExpectIntEQ(wc_AesXtsEncryptSector(NULL, ciphertext, plaintext, 
                                       sizeof(plaintext), sector), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
@@ -241,8 +250,11 @@ int test_wc_AesXtsSectorEncryptDecrypt(void)
     ExpectIntEQ(wc_AesXtsEncryptSector(&aes, ciphertext, NULL, 
                                       sizeof(plaintext), sector), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    ExpectIntEQ(wc_AesXtsEncryptSector(&aes, ciphertext, plaintext, 
+                                      0, sector), 
+                WC_NO_ERR_TRACE(BAD_FUNC_ARG));
 
-    /* Test bad args for sector decryption */
+    /* Test bad args for decrypt */
     ExpectIntEQ(wc_AesXtsDecryptSector(NULL, decrypted, ciphertext, 
                                       sizeof(ciphertext), sector), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
@@ -252,14 +264,18 @@ int test_wc_AesXtsSectorEncryptDecrypt(void)
     ExpectIntEQ(wc_AesXtsDecryptSector(&aes, decrypted, NULL, 
                                       sizeof(ciphertext), sector), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    ExpectIntEQ(wc_AesXtsDecryptSector(&aes, decrypted, ciphertext, 
+                                      0, sector), 
+                WC_NO_ERR_TRACE(BAD_FUNC_ARG));
 
     wc_AesXtsFree(&aes);
 #endif
     return EXPECT_RESULT();
 }
 
+#if defined(WOLFSSL_AESXTS_STREAM)
 /*
- * Testing function for AES-XTS streaming API.
+ * Testing function for AES-XTS streaming API
  */
 int test_wc_AesXtsStreamEncryptDecrypt(void)
 {
@@ -272,103 +288,65 @@ int test_wc_AesXtsStreamEncryptDecrypt(void)
         0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
         0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66
     };
-    byte plaintext[] = { /* Now is the time for all good men w/o trailing 0 */
-        0x4e, 0x6f, 0x77, 0x20, 0x69, 0x73, 0x20, 0x74,
-        0x68, 0x65, 0x20, 0x74, 0x69, 0x6d, 0x65, 0x20,
-        0x66, 0x6f, 0x72, 0x20, 0x61, 0x6c, 0x6c, 0x20,
-        0x67, 0x6f, 0x6f, 0x64, 0x20, 0x6d, 0x65, 0x6e
-    };
     byte tweak[] = {
-        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
-        0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00
+        0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+        0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66
     };
-    byte ciphertext[sizeof(plaintext)];
-    byte decrypted[sizeof(plaintext)];
-    struct XtsAesStreamData stream;
+    byte plaintext[WC_AES_BLOCK_SIZE * 2];
+    byte ciphertext[WC_AES_BLOCK_SIZE * 2];
+    byte decrypted[WC_AES_BLOCK_SIZE * 2];
+    XtsAesStreamData stream;
     int i;
 
-    /* Init stack variables */
-    XMEMSET(ciphertext, 0, sizeof(ciphertext));
-    XMEMSET(decrypted, 0, sizeof(decrypted));
+    /* Fill plaintext with pattern */
+    for (i = 0; i < (int)sizeof(plaintext); i++) {
+        plaintext[i] = (byte)i;
+    }
 
     /* Initialize */
+    XMEMSET(ciphertext, 0, sizeof(ciphertext));
+    XMEMSET(decrypted, 0, sizeof(decrypted));
+    
     ExpectIntEQ(wc_AesXtsInit(&aes, NULL, INVALID_DEVID), 0);
 
-    /* Test encryption with streaming API */
+    /* Test encryption */
     ExpectIntEQ(wc_AesXtsSetKey(&aes, key32, sizeof(key32), AES_ENCRYPTION, 
                                NULL, INVALID_DEVID), 0);
     
-    /* Test initialization */
+    /* Initialize encryption stream */
+    XMEMSET(&stream, 0, sizeof(stream));
     ExpectIntEQ(wc_AesXtsEncryptInit(&aes, tweak, sizeof(tweak), &stream), 0);
     
-    /* Test update with full block */
+    /* Process first block */
     ExpectIntEQ(wc_AesXtsEncryptUpdate(&aes, ciphertext, plaintext, 
                                       WC_AES_BLOCK_SIZE, &stream), 0);
     
-    /* Test final with remaining data */
+    /* Process second block and finalize */
     ExpectIntEQ(wc_AesXtsEncryptFinal(&aes, ciphertext + WC_AES_BLOCK_SIZE, 
                                      plaintext + WC_AES_BLOCK_SIZE, 
-                                     sizeof(plaintext) - WC_AES_BLOCK_SIZE, 
-                                     &stream), 0);
+                                     WC_AES_BLOCK_SIZE, &stream), 0);
 
-    /* Test decryption with streaming API */
+    /* Test decryption */
     ExpectIntEQ(wc_AesXtsSetKey(&aes, key32, sizeof(key32), AES_DECRYPTION, 
                                NULL, INVALID_DEVID), 0);
     
-    /* Test initialization */
+    /* Initialize decryption stream */
+    XMEMSET(&stream, 0, sizeof(stream));
     ExpectIntEQ(wc_AesXtsDecryptInit(&aes, tweak, sizeof(tweak), &stream), 0);
     
-    /* Test update with full block */
+    /* Process first block */
     ExpectIntEQ(wc_AesXtsDecryptUpdate(&aes, decrypted, ciphertext, 
                                       WC_AES_BLOCK_SIZE, &stream), 0);
     
-    /* Test final with remaining data */
+    /* Process second block and finalize */
     ExpectIntEQ(wc_AesXtsDecryptFinal(&aes, decrypted + WC_AES_BLOCK_SIZE, 
                                      ciphertext + WC_AES_BLOCK_SIZE, 
-                                     sizeof(ciphertext) - WC_AES_BLOCK_SIZE, 
-                                     &stream), 0);
-    
-    /* Verify decryption matches original plaintext */
-    ExpectIntEQ(XMEMCMP(plaintext, decrypted, sizeof(plaintext)), 0);
-
-    /* Test byte-by-byte encryption */
-    ExpectIntEQ(wc_AesXtsSetKey(&aes, key32, sizeof(key32), AES_ENCRYPTION, 
-                               NULL, INVALID_DEVID), 0);
-    ExpectIntEQ(wc_AesXtsEncryptInit(&aes, tweak, sizeof(tweak), &stream), 0);
-    
-    /* Encrypt one byte at a time */
-    for (i = 0; i < (int)sizeof(plaintext) - WC_AES_BLOCK_SIZE; i++) {
-        ExpectIntEQ(wc_AesXtsEncryptUpdate(&aes, ciphertext + i, plaintext + i, 
-                                          1, &stream), 0);
-    }
-    
-    /* Final encryption with last block */
-    ExpectIntEQ(wc_AesXtsEncryptFinal(&aes, 
-                                     ciphertext + sizeof(plaintext) - WC_AES_BLOCK_SIZE, 
-                                     plaintext + sizeof(plaintext) - WC_AES_BLOCK_SIZE, 
-                                     WC_AES_BLOCK_SIZE, &stream), 0);
-
-    /* Test byte-by-byte decryption */
-    ExpectIntEQ(wc_AesXtsSetKey(&aes, key32, sizeof(key32), AES_DECRYPTION, 
-                               NULL, INVALID_DEVID), 0);
-    ExpectIntEQ(wc_AesXtsDecryptInit(&aes, tweak, sizeof(tweak), &stream), 0);
-    
-    /* Decrypt one byte at a time */
-    for (i = 0; i < (int)sizeof(ciphertext) - WC_AES_BLOCK_SIZE; i++) {
-        ExpectIntEQ(wc_AesXtsDecryptUpdate(&aes, decrypted + i, ciphertext + i, 
-                                          1, &stream), 0);
-    }
-    
-    /* Final decryption with last block */
-    ExpectIntEQ(wc_AesXtsDecryptFinal(&aes, 
-                                     decrypted + sizeof(ciphertext) - WC_AES_BLOCK_SIZE, 
-                                     ciphertext + sizeof(ciphertext) - WC_AES_BLOCK_SIZE, 
                                      WC_AES_BLOCK_SIZE, &stream), 0);
     
-    /* Verify decryption matches original plaintext */
+    /* Verify decryption */
     ExpectIntEQ(XMEMCMP(plaintext, decrypted, sizeof(plaintext)), 0);
 
-    /* Test bad args for streaming encryption */
+    /* Test bad args for encrypt */
     ExpectIntEQ(wc_AesXtsEncryptInit(NULL, tweak, sizeof(tweak), &stream), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
     ExpectIntEQ(wc_AesXtsEncryptInit(&aes, NULL, sizeof(tweak), &stream), 
@@ -404,7 +382,7 @@ int test_wc_AesXtsStreamEncryptDecrypt(void)
                                      WC_AES_BLOCK_SIZE, NULL), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
 
-    /* Test bad args for streaming decryption */
+    /* Test bad args for decrypt */
     ExpectIntEQ(wc_AesXtsDecryptInit(NULL, tweak, sizeof(tweak), &stream), 
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
     ExpectIntEQ(wc_AesXtsDecryptInit(&aes, NULL, sizeof(tweak), &stream), 
@@ -441,8 +419,8 @@ int test_wc_AesXtsStreamEncryptDecrypt(void)
                 WC_NO_ERR_TRACE(BAD_FUNC_ARG));
 
     wc_AesXtsFree(&aes);
-#endif /* WOLFSSL_AES_XTS && WOLFSSL_AESXTS_STREAM */
     return EXPECT_RESULT();
 }
+#endif /* WOLFSSL_AESXTS_STREAM */
 
 #endif /* WOLFSSL_AES_XTS */
