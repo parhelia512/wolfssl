@@ -89386,6 +89386,14 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wc_AesCtrEncryptDecrypt),
     TEST_DECL(test_wc_AesGcmSetKey),
     TEST_DECL(test_wc_AesGcmEncryptDecrypt),
+#ifdef WOLFSSL_AES_XTS
+    TEST_DECL(test_wc_AesXtsSetKey),
+    TEST_DECL(test_wc_AesXtsEncryptDecrypt),
+    TEST_DECL(test_wc_AesXtsSectorEncryptDecrypt),
+#ifdef WOLFSSL_AESXTS_STREAM
+    TEST_DECL(test_wc_AesXtsStreamEncryptDecrypt),
+#endif
+#endif
     TEST_DECL(test_wc_AesGcmMixedEncDecLongIV),
     TEST_DECL(test_wc_GmacSetKey),
     TEST_DECL(test_wc_GmacUpdate),
