@@ -89104,6 +89104,14 @@ int testAll = 1;
 
 TEST_CASE testCases[] = {
     TEST_DECL(test_fileAccess),
+#ifdef WOLFSSL_AES_XTS
+    TEST_CASE(test_wc_AesXtsSetKey),
+    TEST_CASE(test_wc_AesXtsEncryptDecrypt),
+    TEST_CASE(test_wc_AesXtsSectorEncryptDecrypt),
+#ifdef WOLFSSL_AESXTS_STREAM
+    TEST_CASE(test_wc_AesXtsStreamEncryptDecrypt),
+#endif
+#endif
 
     /*********************************
      * wolfcrypt
