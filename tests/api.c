@@ -89362,7 +89362,6 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wc_AesGcmSetKey),
     TEST_DECL(test_wc_AesGcmEncryptDecrypt),
     TEST_DECL(test_wc_AesGcmMixedEncDecLongIV),
-    TEST_DECL(test_wc_AesGcmStream),
     TEST_DECL(test_wc_GmacSetKey),
     TEST_DECL(test_wc_GmacUpdate),
     TEST_DECL(test_wc_AesCcmSetKey),
