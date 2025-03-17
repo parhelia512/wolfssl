@@ -7,6 +7,14 @@
     TEST_DECL(test_wc_AesXtsStreamEncryptDecrypt),
 #endif
 #endif
+#ifdef WOLFSSL_AES_XTS
+    TEST_DECL(test_wc_AesXtsSetKey),
+    TEST_DECL(test_wc_AesXtsEncryptDecrypt),
+    TEST_DECL(test_wc_AesXtsSectorEncryptDecrypt),
+#ifdef WOLFSSL_AESXTS_STREAM
+    TEST_DECL(test_wc_AesXtsStreamEncryptDecrypt),
+#endif
+#endif
  *
  * Copyright (C) 2006-2025 wolfSSL Inc.
  *
