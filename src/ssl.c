@@ -101,7 +101,6 @@
     #include <wolfssl/openssl/err.h>
     #include <wolfssl/openssl/modes.h>
     #include <wolfssl/openssl/opensslv.h>
-    #include <wolfssl/openssl/rc4.h>
     #include <wolfssl/openssl/stack.h>
     #include <wolfssl/openssl/x509_vfy.h>
     /* openssl headers end, wolfssl internal headers next */
@@ -111,7 +110,6 @@
     #include <wolfssl/wolfcrypt/ecc.h>
     #include <wolfssl/wolfcrypt/md4.h>
     #include <wolfssl/wolfcrypt/md5.h>
-    #include <wolfssl/wolfcrypt/arc4.h>
     #include <wolfssl/wolfcrypt/curve25519.h>
     #include <wolfssl/wolfcrypt/ed25519.h>
     #include <wolfssl/wolfcrypt/curve448.h>
@@ -2600,9 +2598,6 @@ int wolfSSL_GetObjectSize(void)
 #ifdef SHOW_SIZES
     printf("sizeof suites           = %lu\n", (unsigned long)sizeof(Suites));
     printf("sizeof ciphers(2)       = %lu\n", (unsigned long)sizeof(Ciphers));
-#ifndef NO_RC4
-    printf("\tsizeof arc4         = %lu\n", (unsigned long)sizeof(Arc4));
-#endif
     printf("\tsizeof aes          = %lu\n", (unsigned long)sizeof(Aes));
 #ifndef NO_DES3
     printf("\tsizeof des3         = %lu\n", (unsigned long)sizeof(Des3));
@@ -5279,7 +5274,7 @@ int wolfSSL_SetVersion(WOLFSSL* ssl, int version)
     InitSuites(ssl->suites, ssl->version, keySz, haveRSA, havePSK,
                ssl->options.haveDH, ssl->options.haveECDSAsig,
                ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
-               ssl->options.useAnon, TRUE, TRUE, TRUE, TRUE, ssl->options.side);
+               ssl->options.useAnon, TRUE, TRUE, TRUE, ssl->options.side);
     return WOLFSSL_SUCCESS;
 }
 #endif /* !leanpsk */
@@ -15616,7 +15611,6 @@ int wolfSSL_CIPHER_get_cipher_nid(const WOLFSSL_CIPHER* cipher)
         {"AES(256)",                WC_NID_aes_256_cbc},
         {"CAMELLIA(256)",           WC_NID_camellia_256_cbc},
         {"CAMELLIA(128)",           WC_NID_camellia_128_cbc},
-        {"RC4",                     WC_NID_rc4},
         {"3DES",                    WC_NID_des_ede3_cbc},
         {"CHACHA20/POLY1305(256)",  WC_NID_chacha20_poly1305},
         {"None",                    WC_NID_undef},
@@ -15969,11 +15963,6 @@ static WC_INLINE const char* wolfssl_cipher_to_string(int cipher, int key_size)
         case wolfssl_cipher_null:
             encStr = "None";
             break;
-#ifndef NO_RC4
-        case wolfssl_rc4:
-            encStr = "RC4(128)";
-            break;
-#endif
 #ifndef NO_DES3
         case wolfssl_triple_des:
             encStr = "3DES(168)";
@@ -17166,7 +17155,7 @@ long wolfSSL_set_options(WOLFSSL* ssl, long op)
                        havePSK, ssl->options.haveDH, ssl->options.haveECDSAsig,
                        ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                        ssl->options.useAnon,
-                       TRUE, TRUE, TRUE, TRUE, ssl->options.side);
+                       TRUE, TRUE, TRUE, ssl->options.side);
         }
         else {
             /* Only preserve overlapping suites */
@@ -17187,7 +17176,7 @@ long wolfSSL_set_options(WOLFSSL* ssl, long op)
              * - haveStaticECC turns off haveRSA
              * - haveECDSAsig turns off haveRSAsig */
             InitSuites(&tmpSuites, ssl->version, 0, 1, 1, 1, haveECDSAsig, 1, 1,
-                    haveStaticECC, 1, 1, 1, 1, 1, ssl->options.side);
+                    haveStaticECC, 1, 1, 1, 1, ssl->options.side);
             for (in = 0, out = 0; in < ssl->suites->suiteSz; in += SUITE_LEN) {
                 if (FindSuite(&tmpSuites, ssl->suites->suites[in],
                         ssl->suites->suites[in+1]) >= 0) {
@@ -18682,8 +18671,6 @@ const WOLFSSL_ObjectInfo wolfssl_object_info[] = {
         { PBKDF2_OID, PBKDF2_OID, oidKdfType, "PBKDFv2", "PBKDF2"},
 
         /* oidPBEType */
-        { PBE_SHA1_RC4_128, PBE_SHA1_RC4_128, oidPBEType,
-          "PBE-SHA1-RC4-128", "pbeWithSHA1And128BitRC4"},
         { PBE_SHA1_DES, PBE_SHA1_DES, oidPBEType, "PBE-SHA1-DES",
           "pbeWithSHA1AndDES-CBC"},
         { PBE_SHA1_DES3, PBE_SHA1_DES3, oidPBEType, "PBE-SHA1-3DES",
@@ -23769,8 +23756,6 @@ word32 nid2oid(int nid, int grp)
         /* oidPBEType */
         case oidPBEType:
             switch (nid) {
-                case PBE_SHA1_RC4_128:
-                    return PBE_SHA1_RC4_128;
                 case PBE_SHA1_DES:
                     return PBE_SHA1_DES;
                 case PBE_SHA1_DES3:
@@ -24149,8 +24134,6 @@ int oid2nid(word32 oid, int grp)
         /* oidPBEType */
         case oidPBEType:
             switch (oid) {
-                case PBE_SHA1_RC4_128:
-                    return PBE_SHA1_RC4_128;
                 case PBE_SHA1_DES:
                     return PBE_SHA1_DES;
                 case PBE_SHA1_DES3:
@@ -26072,10 +26055,6 @@ int wolfSSL_RAND_load_file(const char* fname, long len)
                 WOLFSSL_MSG("DES3 ECB");
                 break;
 #endif
-            case WC_ARC4_TYPE :
-                WOLFSSL_MSG("ARC4");
-                break;
-
 #if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
             case WC_CHACHA20_POLY1305_TYPE:
                 break;
@@ -26203,10 +26182,6 @@ int wolfSSL_RAND_load_file(const char* fname, long len)
                 WOLFSSL_MSG("DES3 ECB");
                 break;
 #endif
-
-            case WC_ARC4_TYPE :
-                WOLFSSL_MSG("ARC4");
-                break;
 
 #if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
             case WC_CHACHA20_POLY1305_TYPE:

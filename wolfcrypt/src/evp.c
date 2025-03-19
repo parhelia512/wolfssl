@@ -254,10 +254,6 @@ static const struct s_ent {
     static const char EVP_DES_EDE3_ECB[] = "DES-EDE3-ECB";
 #endif
 
-#ifndef NO_RC4
-    static const char EVP_ARC4[] = "ARC4";
-#endif
-
 #if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
     static const char EVP_CHACHA20_POLY1305[] = "CHACHA20-POLY1305";
 #endif
@@ -398,9 +394,6 @@ int wolfSSL_EVP_Cipher_key_length(const WOLFSSL_EVP_CIPHER* c)
       case WC_DES_EDE3_CBC_TYPE: return 24;
       case WC_DES_ECB_TYPE:      return 8;
       case WC_DES_EDE3_ECB_TYPE: return 24;
-  #endif
-  #ifndef NO_RC4
-      case WC_ARC4_TYPE:         return 16;
   #endif
   #if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
       case WC_CHACHA20_POLY1305_TYPE: return 32;
@@ -705,11 +698,6 @@ static int evpCipherBlock(WOLFSSL_EVP_CIPHER_CTX *ctx,
             ret = wc_Des3_EcbEncrypt(&ctx->cipher.des3, out, in, inl);
             break;
         #endif
-    #endif
-    #ifndef NO_RC4
-        case WC_ARC4_TYPE:
-            wc_Arc4Process(&ctx->cipher.arc4, out, in, inl);
-            break;
     #endif
 #if defined(WOLFSSL_SM4_ECB)
         case WC_SM4_ECB_TYPE:
@@ -2015,11 +2003,6 @@ static unsigned int cipherType(const WOLFSSL_EVP_CIPHER *cipher)
         return WC_ARIA_256_GCM_TYPE;
 #endif /* HAVE_ARIA */
 
-#ifndef NO_RC4
-    else if (EVP_CIPHER_TYPE_MATCHES(cipher, EVP_ARC4))
-      return WC_ARC4_TYPE;
-#endif
-
 #if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
     else if (EVP_CIPHER_TYPE_MATCHES(cipher, EVP_CHACHA20_POLY1305))
         return WC_CHACHA20_POLY1305_TYPE;
@@ -2117,10 +2100,6 @@ int wolfSSL_EVP_CIPHER_block_size(const WOLFSSL_EVP_CIPHER *cipher)
     #endif
   #endif /* NO_AES */
 
-  #ifndef NO_RC4
-        case WC_ARC4_TYPE:
-            return 1;
-  #endif
 #if defined(HAVE_ARIA)
     case WC_ARIA_128_GCM_TYPE:
     case WC_ARIA_192_GCM_TYPE:
@@ -2244,10 +2223,6 @@ unsigned long WOLFSSL_CIPHER_mode(const WOLFSSL_EVP_CIPHER *cipher)
         case WC_DES_ECB_TYPE:
         case WC_DES_EDE3_ECB_TYPE:
             return WOLFSSL_EVP_CIPH_ECB_MODE;
-    #endif
-    #ifndef NO_RC4
-        case WC_ARC4_TYPE:
-            return WOLFSSL_EVP_CIPH_STREAM_CIPHER;
     #endif
     #if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
         case WC_CHACHA20_POLY1305_TYPE:
@@ -5095,10 +5070,6 @@ static const struct cipher{
     {WC_DES_EDE3_ECB_TYPE, EVP_DES_EDE3_ECB, WC_NID_des_ede3_ecb},
 #endif
 
-#ifndef NO_RC4
-    {WC_ARC4_TYPE, EVP_ARC4, WC_NID_undef},
-#endif
-
 #if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
     {WC_CHACHA20_POLY1305_TYPE, EVP_CHACHA20_POLY1305, WC_NID_chacha20_poly1305},
 #endif
@@ -5254,9 +5225,6 @@ const WOLFSSL_EVP_CIPHER *wolfSSL_EVP_get_cipherbyname(const char *name)
 #endif
 #ifdef WOLFSSL_SM4_CCM
         {EVP_SM4_CCM, "sm4-ccm"},
-#endif
-#ifndef NO_RC4
-        {EVP_ARC4, "RC4"},
 #endif
 #if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
         {EVP_CHACHA20_POLY1305, "chacha20-poly1305"},
@@ -5908,14 +5876,6 @@ void wolfSSL_EVP_init(void)
     }
 #endif
 #endif /* NO_DES3 */
-
-#ifndef NO_RC4
-    const WOLFSSL_EVP_CIPHER* wolfSSL_EVP_rc4(void)
-    {
-        WOLFSSL_ENTER("wolfSSL_EVP_rc4");
-        return EVP_ARC4;
-    }
-#endif
 
 #if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
     const WOLFSSL_EVP_CIPHER* wolfSSL_EVP_chacha20_poly1305(void)
@@ -8024,20 +7984,6 @@ void wolfSSL_EVP_init(void)
             }
         }
 #endif /* NO_DES3 */
-#ifndef NO_RC4
-        if (ctx->cipherType == WC_ARC4_TYPE ||
-                (type && EVP_CIPHER_TYPE_MATCHES(type, EVP_ARC4))) {
-            WOLFSSL_MSG("ARC4");
-            ctx->cipherType = WC_ARC4_TYPE;
-            ctx->flags     &= (unsigned long)~WOLFSSL_EVP_CIPH_MODE;
-            ctx->flags     |= WOLFSSL_EVP_CIPH_STREAM_CIPHER;
-            ctx->block_size = 1;
-            if (ctx->keyLen == 0)  /* user may have already set */
-                ctx->keyLen = 16;  /* default to 128 */
-            if (key)
-                wc_Arc4SetKey(&ctx->cipher.arc4, key, (word32)ctx->keyLen);
-        }
-#endif /* NO_RC4 */
         if (ctx->cipherType == WC_NULL_CIPHER_TYPE ||
                 (type && EVP_CIPHER_TYPE_MATCHES(type, EVP_NULL))) {
             WOLFSSL_MSG("NULL cipher");
@@ -8132,9 +8078,6 @@ void wolfSSL_EVP_init(void)
             case WC_DES_EDE3_ECB_TYPE :
                 return WC_NID_des_ede3_ecb;
 #endif
-
-            case WC_ARC4_TYPE :
-                return WC_NID_rc4;
 
 #if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
             case WC_CHACHA20_POLY1305_TYPE:
@@ -8497,15 +8440,6 @@ void wolfSSL_EVP_init(void)
                 break;
 #endif
 #endif /* !NO_DES3 */
-
-#ifndef NO_RC4
-            case WC_ARC4_TYPE :
-                WOLFSSL_MSG("ARC4");
-                wc_Arc4Process(&ctx->cipher.arc4, dst, src, len);
-                if (ret == 0)
-                    ret = (int)len;
-                break;
-#endif
 
             /* TODO: Chacha??? */
 
@@ -9324,19 +9258,7 @@ int wolfSSL_EVP_PKEY_set1_EC_KEY(WOLFSSL_EVP_PKEY *pkey, WOLFSSL_EC_KEY *key)
 void* wolfSSL_EVP_X_STATE(const WOLFSSL_EVP_CIPHER_CTX* ctx)
 {
     WOLFSSL_MSG("wolfSSL_EVP_X_STATE");
-
-    if (ctx) {
-        switch (ctx->cipherType) {
-            case WC_ARC4_TYPE:
-                WOLFSSL_MSG("returning arc4 state");
-                return (void*)&ctx->cipher.arc4.x;
-
-            default:
-                WOLFSSL_MSG("bad x state type");
-                return 0;
-        }
-    }
-
+    WOLFSSL_MSG("bad x state type");
     return NULL;
 }
 int wolfSSL_EVP_PKEY_assign_EC_KEY(WOLFSSL_EVP_PKEY* pkey, WOLFSSL_EC_KEY* key)
@@ -9462,11 +9384,6 @@ int wolfSSL_EVP_CIPHER_CTX_iv_length(const WOLFSSL_EVP_CIPHER_CTX* ctx)
         case WC_DES_EDE3_CBC_TYPE :
             WOLFSSL_MSG("DES EDE3 CBC");
             return DES_BLOCK_SIZE;
-#endif
-#ifndef NO_RC4
-        case WC_ARC4_TYPE :
-            WOLFSSL_MSG("ARC4");
-            return 0;
 #endif
 #ifdef WOLFSSL_AES_CFB
 #if !defined(HAVE_SELFTEST) && !defined(HAVE_FIPS)
@@ -9688,19 +9605,7 @@ int wolfSSL_EVP_CIPHER_iv_length(const WOLFSSL_EVP_CIPHER* cipher)
 int wolfSSL_EVP_X_STATE_LEN(const WOLFSSL_EVP_CIPHER_CTX* ctx)
 {
     WOLFSSL_MSG("wolfSSL_EVP_X_STATE_LEN");
-
-    if (ctx) {
-        switch (ctx->cipherType) {
-            case WC_ARC4_TYPE:
-                WOLFSSL_MSG("returning arc4 state size");
-                return sizeof(Arc4);
-
-            default:
-                WOLFSSL_MSG("bad x state type");
-                return 0;
-        }
-    }
-
+    WOLFSSL_MSG("bad x state type");
     return 0;
 }
 

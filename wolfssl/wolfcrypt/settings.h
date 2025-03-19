@@ -701,8 +701,6 @@
         #define HAVE_BLAKE2S
 
         #define WC_RC2
-        #define WOLFSSL_ALLOW_RC4
-
         #define HAVE_POLY1305
 
         #define WOLFSSL_AES_128
@@ -1190,7 +1188,6 @@
     #define NO_PWDBASED
     #define NO_DES3
     #define NO_MD4
-    #define NO_RC4
     #define NO_MD5
     #define NO_SESSION_CACHE
     #define NO_MAIN_DRIVER
@@ -1335,7 +1332,6 @@
     #define NO_FILESYSTEM           /* Not ported at this time */
     #define USE_CERT_BUFFERS_2048   /* use when NO_FILESYSTEM */
     #define NO_MAIN_DRIVER
-    #define NO_RC4
 #endif
 
 #ifdef WOLFSSL_RIOT_OS
@@ -1878,8 +1874,6 @@ extern void uITRON4_free(void *p) ;
     #define NO_DEV_RANDOM
     #undef  NO_WOLFSSL_DIR
     #define NO_WOLFSSL_DIR
-    #undef  NO_RC4
-    #define NO_RC4
 
     /* enable features */
     #define USE_CERT_BUFFERS_2048
@@ -2302,7 +2296,6 @@ extern void uITRON4_free(void *p) ;
     #define TFM_ECC384
     #define TFM_ECC521
 
-    #define NO_RC4
     #define HAVE_TLS_EXTENSIONS
     #define HAVE_SUPPORTED_CURVES
     #define HAVE_EXTENDED_MASTER
@@ -2693,7 +2686,7 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 
-/* stream ciphers except arc4 need 32bit alignment, intel ok without */
+/* stream ciphers need 32bit alignment, intel ok without */
 #ifndef XSTREAM_ALIGN
     #if defined(__x86_64__) || defined(__ia64__) || defined(__i386__)
         #define NO_XSTREAM_ALIGN
@@ -2710,7 +2703,6 @@ extern void uITRON4_free(void *p) ;
 
 #ifdef WOLFSSL_SGX
     #ifdef _MSC_VER
-        #define NO_RC4
         #ifndef HAVE_FIPS
             #define WOLFCRYPT_ONLY
             #define NO_DES3
@@ -3159,7 +3151,7 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 #if (defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)) || \
-    (!defined(HAVE_AES_CBC) && defined(NO_DES3) && defined(NO_RC4) && \
+    (!defined(HAVE_AES_CBC) && defined(NO_DES3) && \
      !defined(HAVE_CAMELLIA) & !defined(HAVE_NULL_CIPHER))
     #define WOLFSSL_AEAD_ONLY
 #endif
@@ -4252,13 +4244,6 @@ extern void uITRON4_free(void *p) ;
  * Deprecated Algorithm Handling
  *   Unless allowed via a build macro, disable support
  * ---------------------------------------------------------------------------*/
-
-/* RC4: Per RFC7465 Feb 2015, the cipher suite has been deprecated due to a
- * number of exploits capable of decrypting portions of encrypted messages. */
-#ifndef WOLFSSL_ALLOW_RC4
-    #undef  NO_RC4
-    #define NO_RC4
-#endif
 
 #if !defined(WOLFSSL_NO_ASYNC_IO) || defined(WOLFSSL_ASYNC_CRYPT) || \
      defined(WOLFSSL_NONBLOCK_OCSP)
