@@ -253,10 +253,6 @@ static struct {
   "hmac_sha384",  hmac_sha384_test,
   #endif
 #endif
-<<<<<<< HEAD
-=======
-
->>>>>>> ed6cc3fea (Remove all references to arc4/rc4 from IDE directory files)
 #ifndef NO_DES3
   "des",  des_test,
   "des3",  des3_test,

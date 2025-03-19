@@ -552,8 +552,6 @@ extern "C" {
 #undef  NO_DSA
 #define NO_DSA
 
-
-
 #undef  NO_OLD_TLS
 #define NO_OLD_TLS
 
