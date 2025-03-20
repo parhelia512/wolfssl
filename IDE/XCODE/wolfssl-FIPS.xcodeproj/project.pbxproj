@@ -55,7 +55,6 @@
 		521646CB1A8A7FE10062516A /* test.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5216465C1A8993290062516A /* test.h */; };
 		521646CC1A8A7FE10062516A /* version.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5216465D1A8993290062516A /* version.h */; };
 		521646CD1A8A7FF30062516A /* aes.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5216465E1A8993770062516A /* aes.h */; };
-
 		521646CF1A8A7FF30062516A /* asn_public.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 521646601A8993770062516A /* asn_public.h */; };
 		521646D01A8A7FF30062516A /* asn.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 521646611A8993770062516A /* asn.h */; };
 		521646D11A8A7FF30062516A /* blake2-impl.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 521646621A8993770062516A /* blake2-impl.h */; };
@@ -205,7 +204,6 @@
 		A4A54E241BC5C3E0002866CD /* coding.c in Sources */ = {isa = PBXBuildFile; fileRef = 521646171A8992CC0062516A /* coding.c */; };
 		A4A54E251BC5C3E0002866CD /* error.c in Sources */ = {isa = PBXBuildFile; fileRef = 5216461C1A8992CC0062516A /* error.c */; };
 		A4A54E261BC5C3E0002866CD /* hmac.c in Sources */ = {isa = PBXBuildFile; fileRef = 5216461E1A8992CC0062516A /* hmac.c */; };
-
 		A4A54E281BC5C3E0002866CD /* integer.c in Sources */ = {isa = PBXBuildFile; fileRef = 5216461F1A8992CC0062516A /* integer.c */; };
 		A4A54E291BC5C3E0002866CD /* internal.c in Sources */ = {isa = PBXBuildFile; fileRef = 521646021A89928E0062516A /* internal.c */; };
 		A4A54E2A1BC5C3E0002866CD /* wolfio.c in Sources */ = {isa = PBXBuildFile; fileRef = 521646031A89928E0062516A /* wolfio.c */; };
@@ -224,7 +222,6 @@
 		A4A54E3A1BC5C3E0002866CD /* wc_encrypt.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 522DBE121B7929E70031F454 /* wc_encrypt.h */; };
 		A4A54E3B1BC5C3E0002866CD /* hash.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 525BE5BB1B3885580054BBCD /* hash.h */; };
 		A4A54E3C1BC5C3E0002866CD /* aes.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5216465E1A8993770062516A /* aes.h */; };
-
 		A4A54E3E1BC5C3E0002866CD /* asn_public.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 521646601A8993770062516A /* asn_public.h */; };
 		A4A54E3F1BC5C3E0002866CD /* asn.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 521646611A8993770062516A /* asn.h */; };
 		A4A54E401BC5C3E0002866CD /* blake2-impl.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 521646621A8993770062516A /* blake2-impl.h */; };
