@@ -27,7 +27,6 @@ SHA      test passed!
 
 >benchmark
 AES      25 kB took 0.025 seconds,   0.96 MB/s
-
 ...
 
 DH  2048 key agreement   685.93 milliseconds, avg over 1 iterations

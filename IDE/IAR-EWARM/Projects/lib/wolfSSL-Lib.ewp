@@ -1903,7 +1903,6 @@
     <file>
       <name>$PROJ_DIR$\..\..\..\..\wolfcrypt\src\aes.c</name>
     </file>
-
     <file>
       <name>$PROJ_DIR$\..\..\..\..\wolfcrypt\src\asm.c</name>
     </file>
