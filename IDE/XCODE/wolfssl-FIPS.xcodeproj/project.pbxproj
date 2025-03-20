@@ -315,7 +315,7 @@
 				522DBE131B792A190031F454 /* wc_encrypt.h in CopyFiles */,
 				525BE5BC1B3885750054BBCD /* hash.h in CopyFiles */,
 				521646CD1A8A7FF30062516A /* aes.h in CopyFiles */,
-				521646CE1A8A7FF30062516A /* arc4.h in CopyFiles */,
+
 				521646CF1A8A7FF30062516A /* asn_public.h in CopyFiles */,
 				521646D01A8A7FF30062516A /* asn.h in CopyFiles */,
 				521646D11A8A7FF30062516A /* blake2-impl.h in CopyFiles */,
@@ -403,7 +403,7 @@
 				A4A54E3A1BC5C3E0002866CD /* wc_encrypt.h in CopyFiles */,
 				A4A54E3B1BC5C3E0002866CD /* hash.h in CopyFiles */,
 				A4A54E3C1BC5C3E0002866CD /* aes.h in CopyFiles */,
-				A4A54E3D1BC5C3E0002866CD /* arc4.h in CopyFiles */,
+
 				A4A54E3E1BC5C3E0002866CD /* asn_public.h in CopyFiles */,
 				A4A54E3F1BC5C3E0002866CD /* asn.h in CopyFiles */,
 				A4A54E401BC5C3E0002866CD /* blake2-impl.h in CopyFiles */,
@@ -458,7 +458,7 @@
 		521646071A89928E0062516A /* ssl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ssl.c; path = ../../src/ssl.c; sourceTree = "<group>"; };
 		521646081A89928E0062516A /* tls.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tls.c; path = ../../src/tls.c; sourceTree = "<group>"; };
 		521646111A8992CC0062516A /* aes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = aes.c; path = ../../wolfcrypt/src/aes.c; sourceTree = SOURCE_ROOT; };
-		521646121A8992CC0062516A /* arc4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = arc4.c; path = ../../wolfcrypt/src/arc4.c; sourceTree = SOURCE_ROOT; };
+
 		521646131A8992CC0062516A /* asn.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = asn.c; path = ../../wolfcrypt/src/asn.c; sourceTree = SOURCE_ROOT; };
 		521646141A8992CC0062516A /* blake2b.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = blake2b.c; path = ../../wolfcrypt/src/blake2b.c; sourceTree = SOURCE_ROOT; };
 		521646151A8992CC0062516A /* camellia.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = camellia.c; path = ../../wolfcrypt/src/camellia.c; sourceTree = SOURCE_ROOT; };
