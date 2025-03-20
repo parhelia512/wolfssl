@@ -498,7 +498,7 @@
 		5216465C1A8993290062516A /* test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = test.h; path = ../../wolfssl/test.h; sourceTree = "<group>"; };
 		5216465D1A8993290062516A /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = version.h; path = ../../wolfssl/version.h; sourceTree = "<group>"; };
 		5216465E1A8993770062516A /* aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = aes.h; path = ../../wolfssl/wolfcrypt/aes.h; sourceTree = "<group>"; };
-		5216465F1A8993770062516A /* arc4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = arc4.h; path = ../../wolfssl/wolfcrypt/arc4.h; sourceTree = "<group>"; };
+
 		521646601A8993770062516A /* asn_public.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = asn_public.h; path = ../../wolfssl/wolfcrypt/asn_public.h; sourceTree = "<group>"; };
 		521646611A8993770062516A /* asn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = asn.h; path = ../../wolfssl/wolfcrypt/asn.h; sourceTree = "<group>"; };
 		521646621A8993770062516A /* blake2-impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "blake2-impl.h"; path = "../../wolfssl/wolfcrypt/blake2-impl.h"; sourceTree = "<group>"; };
@@ -670,7 +670,7 @@
 				700F0CD62A2FC0D500755BA7 /* wolfevent.h */,
 				700F0CEB2A2FC0D500755BA7 /* wolfmath.h */,
 				5216465E1A8993770062516A /* aes.h */,
-				5216465F1A8993770062516A /* arc4.h */,
+
 				521646601A8993770062516A /* asn_public.h */,
 				521646611A8993770062516A /* asn.h */,
 				521646621A8993770062516A /* blake2-impl.h */,
@@ -748,7 +748,7 @@
 			isa = PBXGroup;
 			children = (
 				521646111A8992CC0062516A /* aes.c */,
-				521646121A8992CC0062516A /* arc4.c */,
+
 				521646131A8992CC0062516A /* asn.c */,
 				521646141A8992CC0062516A /* blake2b.c */,
 				521646151A8992CC0062516A /* camellia.c */,
@@ -964,7 +964,7 @@
 				521646381A8992CC0062516A /* coding.c in Sources */,
 				5216463D1A8992CC0062516A /* error.c in Sources */,
 				5216463F1A8992CC0062516A /* hmac.c in Sources */,
-				521646331A8992CC0062516A /* arc4.c in Sources */,
+
 				521646401A8992CC0062516A /* integer.c in Sources */,
 				5216460A1A89928E0062516A /* internal.c in Sources */,
 				5216460B1A89928E0062516A /* wolfio.c in Sources */,
