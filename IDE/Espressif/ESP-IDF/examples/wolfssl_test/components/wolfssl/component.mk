@@ -176,7 +176,6 @@ COMPONENT_OBJS += $(WOLFSSL_ROOT)/src/wolfio.o
 ## wolfcrypt
 ##
 COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/aes.o
-COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/arc4.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/asm.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/asn.o
 # COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/async.o # autogen exclusion
@@ -231,7 +230,6 @@ COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/pkcs7.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/poly1305.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/pwdbased.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/random.o
-COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/rc2.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/ripemd.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/rsa.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/sakke.o
