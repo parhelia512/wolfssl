@@ -4549,6 +4549,26 @@ static const byte extCertPolicyAnyOid[] = {85, 29, 32, 0};
     static const byte extCertPolicyDodInternalNpe128Oid[] = 
             DOD_POLICY_TYPE_OID_BASE(61); 
     static const byte extCertPolicyDodInternalNpe192Oid[] = 
+    /* ECA PKI OIDs - 2.16.840.1.101.3.2.1.12.X */ 
+    #define ECA_POLICY_TYPE_OID_BASE(num) {96, 134, 72, 1, 101, 3, 2, 1, 12, num} 
+    static const byte extCertPolicyEcaMediumOid[] = 
+            ECA_POLICY_TYPE_OID_BASE(1); 
+    static const byte extCertPolicyEcaMediumHardwareOid[] = 
+            ECA_POLICY_TYPE_OID_BASE(2); 
+    static const byte extCertPolicyEcaMediumTokenOid[] = 
+            ECA_POLICY_TYPE_OID_BASE(3); 
+    static const byte extCertPolicyEcaMediumSha256Oid[] = 
+            ECA_POLICY_TYPE_OID_BASE(4); 
+    static const byte extCertPolicyEcaMediumTokenSha256Oid[] = 
+            ECA_POLICY_TYPE_OID_BASE(5); 
+    static const byte extCertPolicyEcaMediumHardwarePiviOid[] = 
+            ECA_POLICY_TYPE_OID_BASE(6); 
+    static const byte extCertPolicyEcaContentSigningPiviOid[] = 
+            ECA_POLICY_TYPE_OID_BASE(8); 
+    static const byte extCertPolicyEcaMediumDeviceSha256Oid[] = 
+            ECA_POLICY_TYPE_OID_BASE(9); 
+    static const byte extCertPolicyEcaMediumHardwareSha256Oid[] = 
+            ECA_POLICY_TYPE_OID_BASE(10);
             DOD_POLICY_TYPE_OID_BASE(62);
 #endif /* WOLFSSL_FPKI */
 
@@ -5438,6 +5458,42 @@ const byte* OidFromId(word32 id, word32 type, word32* oidSz)
                     *oidSz = sizeof(extCertPolicyDodInternalNpe128Oid); 
                     break; 
                 case CP_DOD_INTERNAL_NPE_192_OID: 
+                case CP_ECA_MEDIUM_OID: 
+                    oid = extCertPolicyEcaMediumOid; 
+                    *oidSz = sizeof(extCertPolicyEcaMediumOid); 
+                    break; 
+                case CP_ECA_MEDIUM_HARDWARE_OID: 
+                    oid = extCertPolicyEcaMediumHardwareOid; 
+                    *oidSz = sizeof(extCertPolicyEcaMediumHardwareOid); 
+                    break; 
+                case CP_ECA_MEDIUM_TOKEN_OID: 
+                    oid = extCertPolicyEcaMediumTokenOid; 
+                    *oidSz = sizeof(extCertPolicyEcaMediumTokenOid); 
+                    break; 
+                case CP_ECA_MEDIUM_SHA256_OID: 
+                    oid = extCertPolicyEcaMediumSha256Oid; 
+                    *oidSz = sizeof(extCertPolicyEcaMediumSha256Oid); 
+                    break; 
+                case CP_ECA_MEDIUM_TOKEN_SHA256_OID: 
+                    oid = extCertPolicyEcaMediumTokenSha256Oid; 
+                    *oidSz = sizeof(extCertPolicyEcaMediumTokenSha256Oid); 
+                    break; 
+                case CP_ECA_MEDIUM_HARDWARE_PIVI_OID: 
+                    oid = extCertPolicyEcaMediumHardwarePiviOid; 
+                    *oidSz = sizeof(extCertPolicyEcaMediumHardwarePiviOid); 
+                    break; 
+                case CP_ECA_CONTENT_SIGNING_PIVI_OID: 
+                    oid = extCertPolicyEcaContentSigningPiviOid; 
+                    *oidSz = sizeof(extCertPolicyEcaContentSigningPiviOid); 
+                    break; 
+                case CP_ECA_MEDIUM_DEVICE_SHA256_OID: 
+                    oid = extCertPolicyEcaMediumDeviceSha256Oid; 
+                    *oidSz = sizeof(extCertPolicyEcaMediumDeviceSha256Oid); 
+                    break; 
+                case CP_ECA_MEDIUM_HARDWARE_SHA256_OID: 
+                    oid = extCertPolicyEcaMediumHardwareSha256Oid; 
+                    *oidSz = sizeof(extCertPolicyEcaMediumHardwareSha256Oid); 
+                    break;
                     oid = extCertPolicyDodInternalNpe192Oid; 
                     *oidSz = sizeof(extCertPolicyDodInternalNpe192Oid); 
                     break;
