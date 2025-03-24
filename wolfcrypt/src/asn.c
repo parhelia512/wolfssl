@@ -4506,6 +4506,50 @@ static const byte extCertPolicyAnyOid[] = {85, 29, 32, 0};
             CERT_POLICY_TYPE_OID_BASE(41);
     static const byte extCertPolicyFpkiPiviAuthOid[] =
             CERT_POLICY_TYPE_OID_BASE(45);
+    /* DoD PKI OIDs - 2.16.840.1.101.2.1.11.X */ 
+    #define DOD_POLICY_TYPE_OID_BASE(num) {96, 134, 72, 1, 101, 2, 1, 11, num} 
+    static const byte extCertPolicyDodMediumOid[] = 
+            DOD_POLICY_TYPE_OID_BASE(5); 
+    static const byte extCertPolicyDodMediumHardwareOid[] = 
+            DOD_POLICY_TYPE_OID_BASE(9); 
+    static const byte extCertPolicyDodPivAuthOid[] = 
+            DOD_POLICY_TYPE_OID_BASE(10); 
+    static const byte extCertPolicyDodMediumNpeOid[] = 
+            DOD_POLICY_TYPE_OID_BASE(17); 
+    static const byte extCertPolicyDodMedium2048Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(18); 
+    static const byte extCertPolicyDodMediumHardware2048Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(19); 
+    static const byte extCertPolicyDodPivAuth2048Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(20); 
+    static const byte extCertPolicyDodPeerInteropOid[] = 
+            DOD_POLICY_TYPE_OID_BASE(31); 
+    static const byte extCertPolicyDodMediumNpe112Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(36); 
+    static const byte extCertPolicyDodMediumNpe128Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(37); 
+    static const byte extCertPolicyDodMediumNpe192Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(38); 
+    static const byte extCertPolicyDodMedium112Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(39); 
+    static const byte extCertPolicyDodMedium128Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(40); 
+    static const byte extCertPolicyDodMedium192Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(41); 
+    static const byte extCertPolicyDodMediumHardware112Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(42); 
+    static const byte extCertPolicyDodMediumHardware128Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(43); 
+    static const byte extCertPolicyDodMediumHardware192Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(44); 
+    static const byte extCertPolicyDodAdminOid[] = 
+            DOD_POLICY_TYPE_OID_BASE(59); 
+    static const byte extCertPolicyDodInternalNpe112Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(60); 
+    static const byte extCertPolicyDodInternalNpe128Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(61); 
+    static const byte extCertPolicyDodInternalNpe192Oid[] = 
+            DOD_POLICY_TYPE_OID_BASE(62);
 #endif /* WOLFSSL_FPKI */
 
 /* certAltNameType */
@@ -5312,6 +5356,90 @@ const byte* OidFromId(word32 id, word32 type, word32* oidSz)
                 case CP_FPKI_PIVI_AUTH_OID:
                     oid = extCertPolicyFpkiPiviAuthOid;
                     *oidSz = sizeof(extCertPolicyFpkiPiviAuthOid);
+                    break;
+                case CP_DOD_MEDIUM_OID: 
+                    oid = extCertPolicyDodMediumOid; 
+                    *oidSz = sizeof(extCertPolicyDodMediumOid); 
+                    break; 
+                case CP_DOD_MEDIUM_HARDWARE_OID: 
+                    oid = extCertPolicyDodMediumHardwareOid; 
+                    *oidSz = sizeof(extCertPolicyDodMediumHardwareOid); 
+                    break; 
+                case CP_DOD_PIV_AUTH_OID: 
+                    oid = extCertPolicyDodPivAuthOid; 
+                    *oidSz = sizeof(extCertPolicyDodPivAuthOid); 
+                    break; 
+                case CP_DOD_MEDIUM_NPE_OID: 
+                    oid = extCertPolicyDodMediumNpeOid; 
+                    *oidSz = sizeof(extCertPolicyDodMediumNpeOid); 
+                    break; 
+                case CP_DOD_MEDIUM_2048_OID: 
+                    oid = extCertPolicyDodMedium2048Oid; 
+                    *oidSz = sizeof(extCertPolicyDodMedium2048Oid); 
+                    break; 
+                case CP_DOD_MEDIUM_HARDWARE_2048_OID: 
+                    oid = extCertPolicyDodMediumHardware2048Oid; 
+                    *oidSz = sizeof(extCertPolicyDodMediumHardware2048Oid); 
+                    break; 
+                case CP_DOD_PIV_AUTH_2048_OID: 
+                    oid = extCertPolicyDodPivAuth2048Oid; 
+                    *oidSz = sizeof(extCertPolicyDodPivAuth2048Oid); 
+                    break; 
+                case CP_DOD_PEER_INTEROP_OID: 
+                    oid = extCertPolicyDodPeerInteropOid; 
+                    *oidSz = sizeof(extCertPolicyDodPeerInteropOid); 
+                    break; 
+                case CP_DOD_MEDIUM_NPE_112_OID: 
+                    oid = extCertPolicyDodMediumNpe112Oid; 
+                    *oidSz = sizeof(extCertPolicyDodMediumNpe112Oid); 
+                    break; 
+                case CP_DOD_MEDIUM_NPE_128_OID: 
+                    oid = extCertPolicyDodMediumNpe128Oid; 
+                    *oidSz = sizeof(extCertPolicyDodMediumNpe128Oid); 
+                    break; 
+                case CP_DOD_MEDIUM_NPE_192_OID: 
+                    oid = extCertPolicyDodMediumNpe192Oid; 
+                    *oidSz = sizeof(extCertPolicyDodMediumNpe192Oid); 
+                    break; 
+                case CP_DOD_MEDIUM_112_OID: 
+                    oid = extCertPolicyDodMedium112Oid; 
+                    *oidSz = sizeof(extCertPolicyDodMedium112Oid); 
+                    break; 
+                case CP_DOD_MEDIUM_128_OID: 
+                    oid = extCertPolicyDodMedium128Oid; 
+                    *oidSz = sizeof(extCertPolicyDodMedium128Oid); 
+                    break; 
+                case CP_DOD_MEDIUM_192_OID: 
+                    oid = extCertPolicyDodMedium192Oid; 
+                    *oidSz = sizeof(extCertPolicyDodMedium192Oid); 
+                    break; 
+                case CP_DOD_MEDIUM_HARDWARE_112_OID: 
+                    oid = extCertPolicyDodMediumHardware112Oid; 
+                    *oidSz = sizeof(extCertPolicyDodMediumHardware112Oid); 
+                    break; 
+                case CP_DOD_MEDIUM_HARDWARE_128_OID: 
+                    oid = extCertPolicyDodMediumHardware128Oid; 
+                    *oidSz = sizeof(extCertPolicyDodMediumHardware128Oid); 
+                    break; 
+                case CP_DOD_MEDIUM_HARDWARE_192_OID: 
+                    oid = extCertPolicyDodMediumHardware192Oid; 
+                    *oidSz = sizeof(extCertPolicyDodMediumHardware192Oid); 
+                    break; 
+                case CP_DOD_ADMIN_OID: 
+                    oid = extCertPolicyDodAdminOid; 
+                    *oidSz = sizeof(extCertPolicyDodAdminOid); 
+                    break; 
+                case CP_DOD_INTERNAL_NPE_112_OID: 
+                    oid = extCertPolicyDodInternalNpe112Oid; 
+                    *oidSz = sizeof(extCertPolicyDodInternalNpe112Oid); 
+                    break; 
+                case CP_DOD_INTERNAL_NPE_128_OID: 
+                    oid = extCertPolicyDodInternalNpe128Oid; 
+                    *oidSz = sizeof(extCertPolicyDodInternalNpe128Oid); 
+                    break; 
+                case CP_DOD_INTERNAL_NPE_192_OID: 
+                    oid = extCertPolicyDodInternalNpe192Oid; 
+                    *oidSz = sizeof(extCertPolicyDodInternalNpe192Oid); 
                     break;
                 #endif /* WOLFSSL_FPKI */
                 default:

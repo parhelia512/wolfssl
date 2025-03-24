@@ -1425,10 +1425,34 @@ enum Extensions_Sum {
 enum CertificatePolicy_Sum {
     CP_ANY_OID              = 146, /* id-ce 32 0 */
 #ifdef WOLFSSL_FPKI
+    /* Federal PKI OIDs */
     CP_FPKI_COMMON_AUTH_OID = 426, /* 2.16.840.1.101.3.2.1.3.13 */
     CP_FPKI_PIV_AUTH_OID    = 453, /* 2.16.840.1.101.3.2.1.3.40 */
     CP_FPKI_PIV_AUTH_HW_OID = 454, /* 2.16.840.1.101.3.2.1.3.41 */
     CP_FPKI_PIVI_AUTH_OID   = 458, /* 2.16.840.1.101.3.2.1.3.45 */
+    
+    /* DoD PKI OIDs */
+    CP_DOD_MEDIUM_OID                = 423, /* 2.16.840.1.101.2.1.11.5 */
+    CP_DOD_MEDIUM_HARDWARE_OID       = 427, /* 2.16.840.1.101.2.1.11.9 */
+    CP_DOD_PIV_AUTH_OID              = 428, /* 2.16.840.1.101.2.1.11.10 */
+    CP_DOD_MEDIUM_NPE_OID            = 435, /* 2.16.840.1.101.2.1.11.17 */
+    CP_DOD_MEDIUM_2048_OID           = 436, /* 2.16.840.1.101.2.1.11.18 */
+    CP_DOD_MEDIUM_HARDWARE_2048_OID  = 437, /* 2.16.840.1.101.2.1.11.19 */
+    CP_DOD_PIV_AUTH_2048_OID         = 438, /* 2.16.840.1.101.2.1.11.20 */
+    CP_DOD_PEER_INTEROP_OID          = 449, /* 2.16.840.1.101.2.1.11.31 */
+    CP_DOD_MEDIUM_NPE_112_OID        = 454, /* 2.16.840.1.101.2.1.11.36 */
+    CP_DOD_MEDIUM_NPE_128_OID        = 455, /* 2.16.840.1.101.2.1.11.37 */
+    CP_DOD_MEDIUM_NPE_192_OID        = 456, /* 2.16.840.1.101.2.1.11.38 */
+    CP_DOD_MEDIUM_112_OID            = 457, /* 2.16.840.1.101.2.1.11.39 */
+    CP_DOD_MEDIUM_128_OID            = 458, /* 2.16.840.1.101.2.1.11.40 */
+    CP_DOD_MEDIUM_192_OID            = 459, /* 2.16.840.1.101.2.1.11.41 */
+    CP_DOD_MEDIUM_HARDWARE_112_OID   = 460, /* 2.16.840.1.101.2.1.11.42 */
+    CP_DOD_MEDIUM_HARDWARE_128_OID   = 461, /* 2.16.840.1.101.2.1.11.43 */
+    CP_DOD_MEDIUM_HARDWARE_192_OID   = 462, /* 2.16.840.1.101.2.1.11.44 */
+    CP_DOD_ADMIN_OID                 = 477, /* 2.16.840.1.101.2.1.11.59 */
+    CP_DOD_INTERNAL_NPE_112_OID      = 478, /* 2.16.840.1.101.2.1.11.60 */
+    CP_DOD_INTERNAL_NPE_128_OID      = 479, /* 2.16.840.1.101.2.1.11.61 */
+    CP_DOD_INTERNAL_NPE_192_OID      = 480, /* 2.16.840.1.101.2.1.11.62 */
 #endif /* WOLFSSL_FPKI */
     WOLF_ENUM_DUMMY_LAST_ELEMENT(CertificatePolicy_Sum)
 };
