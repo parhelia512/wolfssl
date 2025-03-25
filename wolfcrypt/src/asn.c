@@ -4507,6 +4507,16 @@ static const byte extCertPolicyAnyOid[] = {85, 29, 32, 0};
     static const byte extCertPolicyFpkiPiviAuthOid[] =
             CERT_POLICY_TYPE_OID_BASE(45);
     /* DoD PKI OIDs - 2.16.840.1.101.2.1.11.X */ 
+    static const byte extCertPolicyFpkiPiviHardwareOid[] =
+            CERT_POLICY_TYPE_OID_BASE(18);
+    static const byte extCertPolicyFpkiPiviContentSigningOid[] =
+            CERT_POLICY_TYPE_OID_BASE(20);
+    static const byte extCertPolicyFpkiMediumDeviceHardwareOid[] =
+            CERT_POLICY_TYPE_OID_BASE(38);
+    static const byte extCertPolicyFpkiCommonPivAuthDerivedHardwareOid[] =
+            CERT_POLICY_TYPE_OID_BASE(41);
+    static const byte extCertPolicyFpkiCommonPiviContentSigningOid[] =
+            CERT_POLICY_TYPE_OID_BASE(47);
     #define DOD_POLICY_TYPE_OID_BASE(num) {96, 134, 72, 1, 101, 2, 1, 11, num} 
     static const byte extCertPolicyDodMediumOid[] = 
             DOD_POLICY_TYPE_OID_BASE(5); 
@@ -5378,6 +5388,26 @@ const byte* OidFromId(word32 id, word32 type, word32* oidSz)
                     *oidSz = sizeof(extCertPolicyFpkiPiviAuthOid);
                     break;
                 case CP_DOD_MEDIUM_OID: 
+                case CP_FPKI_PIVI_HARDWARE_OID:
+                    oid = extCertPolicyFpkiPiviHardwareOid;
+                    *oidSz = sizeof(extCertPolicyFpkiPiviHardwareOid);
+                    break;
+                case CP_FPKI_PIVI_CONTENT_SIGNING_OID:
+                    oid = extCertPolicyFpkiPiviContentSigningOid;
+                    *oidSz = sizeof(extCertPolicyFpkiPiviContentSigningOid);
+                    break;
+                case CP_FPKI_MEDIUM_DEVICE_HARDWARE_OID:
+                    oid = extCertPolicyFpkiMediumDeviceHardwareOid;
+                    *oidSz = sizeof(extCertPolicyFpkiMediumDeviceHardwareOid);
+                    break;
+                case CP_FPKI_COMMON_PIV_AUTH_DERIVED_HARDWARE_OID:
+                    oid = extCertPolicyFpkiCommonPivAuthDerivedHardwareOid;
+                    *oidSz = sizeof(extCertPolicyFpkiCommonPivAuthDerivedHardwareOid);
+                    break;
+                case CP_FPKI_COMMON_PIVI_CONTENT_SIGNING_OID:
+                    oid = extCertPolicyFpkiCommonPiviContentSigningOid;
+                    *oidSz = sizeof(extCertPolicyFpkiCommonPiviContentSigningOid);
+                    break;
                     oid = extCertPolicyDodMediumOid; 
                     *oidSz = sizeof(extCertPolicyDodMediumOid); 
                     break; 
