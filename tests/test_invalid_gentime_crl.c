@@ -40,7 +40,7 @@ int test_invalid_gentime_crl(void)
     int ret = 0;
     XFILE fp = XBADFILE;
     X509_CRL *crl = NULL;
-    const char* crlFile = "./certs/crl/invalid/gentime13.pem";
+    const char* crlFile = "../certs/crl/invalid/gentime13.pem";
 
     printf("Testing CRL with invalid GeneralizedTime length (13 characters)...\n");
 
