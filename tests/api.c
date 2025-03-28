@@ -51394,6 +51394,39 @@ static int test_wolfSSL_X509_print(void)
 }
 
 static int test_wolfSSL_X509_CRL_print(void)
+
+static int test_wolfSSL_X509_CRL_invalid_gentime(void)
+{
+    EXPECT_DECLS;
+#if defined(OPENSSL_EXTRA) && !defined(NO_CERTS) && defined(HAVE_CRL) && \
+    !defined(NO_RSA) && !defined(NO_FILESYSTEM)
+    X509_CRL* crl = NULL;
+    XFILE fp = XBADFILE;
+    const char* crlFile = "./certs/crl/invalid/gentime13.pem";
+
+    WOLFSSL_MSG("Testing CRL with invalid GeneralizedTime length (13 characters)");
+
+    /* Try to load CRL with invalid GeneralizedTime length */
+    ExpectTrue((fp = XFOPEN(crlFile, "rb")) != XBADFILE);
+    if (fp == XBADFILE) {
+        WOLFSSL_MSG("Failed to open CRL file");
+        EXPECT_FAIL();
+        goto done;
+    }
+
+    /* This should fail due to invalid GeneralizedTime length */
+    crl = (X509_CRL*)PEM_read_X509_CRL(fp, (X509_CRL**)NULL, NULL, NULL);
+    
+    /* Expect crl to be NULL due to invalid date format */
+    ExpectNull(crl);
+
+done:
+    if (fp != XBADFILE) {
+        XFCLOSE(fp);
+    }
+#endif
+    return EXPECT_RESULT();
+}
 {
     EXPECT_DECLS;
 #if defined(OPENSSL_EXTRA) && !defined(NO_CERTS) && defined(HAVE_CRL) && \
@@ -67094,6 +67127,7 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wolfSSL_X509_check_ca),
     TEST_DECL(test_wolfSSL_X509_check_ip_asc),
     TEST_DECL(test_wolfSSL_X509_bad_altname),
+    TEST_DECL(test_wolfSSL_X509_CRL_invalid_gentime),
     TEST_DECL(test_wolfSSL_X509_name_match),
     TEST_DECL(test_wolfSSL_X509_name_match2),
     TEST_DECL(test_wolfSSL_X509_name_match3),
