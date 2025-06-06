@@ -325,6 +325,7 @@
 #include <tests/api/test_evp.h>
 #include <tests/api/test_tls_ext.h>
 #include <tests/api/test_tls.h>
+#include <tests/api/test_x509.h>
 
 #if !defined(NO_FILESYSTEM) && !defined(NO_CERTS) && !defined(NO_TLS) && \
     !defined(NO_RSA)        && !defined(SINGLE_THREADED) && \
@@ -697,6 +698,34 @@ static int test_fileAccess(void)
     ExpectIntEQ(XMEMCMP(server_cert_der_2048, buff, sz), 0);
     XFREE(buff, NULL, DYNAMIC_TYPE_FILE);
     XFCLOSE(f);
+#endif
+    return EXPECT_RESULT();
+}
+static int test_wc_FreeCertList(void)
+{
+    EXPECT_DECLS;
+#if defined(HAVE_PKCS12) && !defined(NO_ASN) && \
+!defined(NO_PWDBASED) && !defined(NO_HMAC) && !defined(NO_CERTS) && \
+defined(USE_CERT_BUFFERS_2048)
+    WC_DerCertList* list = NULL;
+    void* heap = NULL;
+    /* Test freeing a list with a single node */
+    list = (WC_DerCertList*)XMALLOC(sizeof(WC_DerCertList),
+            heap, DYNAMIC_TYPE_PKCS);
+    ExpectNotNull(list);
+    if (list != NULL) {
+        list->buffer = (byte*)XMALLOC(10, heap, DYNAMIC_TYPE_PKCS);
+        ExpectNotNull(list->buffer);
+        if (list->buffer != NULL) {
+            list->bufferSz = 10;
+            list->next = NULL;
+            wc_FreeCertList(list, heap);
+        }
+        else {
+            XFREE(list, heap, DYNAMIC_TYPE_PKCS);
+            list = NULL;
+        }
+    }
 #endif
     return EXPECT_RESULT();
 }
@@ -5498,6 +5527,57 @@ static int test_wolfSSL_CTX_SetTmpDH_buffer(void)
                 WOLFSSL_FILETYPE_ASN1));
 
     wolfSSL_CTX_free(ctx);
+#endif
+    return EXPECT_RESULT();
+}
+
+static int test_wc_DhSetNamedKey(void)
+{
+    EXPECT_DECLS;
+#if !defined(HAVE_SELFTEST) && !defined(NO_DH) && \
+    !defined(WOLFSSL_NO_MALLOC) && defined(HAVE_FFDHE) && \
+    (!defined(HAVE_FIPS) || FIPS_VERSION_GT(2,0))
+    DhKey *key = NULL;
+    key = (DhKey*)XMALLOC(sizeof(DhKey), HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    ExpectNotNull(key);
+    if (key != NULL){
+        #ifdef HAVE_FFDHE_2048
+        if (wc_InitDhKey_ex(key, HEAP_HINT, INVALID_DEVID) == 0){
+            ExpectIntEQ(wc_DhSetNamedKey(key, WC_FFDHE_2048), 0);
+            ExpectIntEQ(wc_DhGetNamedKeyMinSize(WC_FFDHE_2048), 29);
+            wc_FreeDhKey(key);
+        }
+        #endif
+        #ifdef HAVE_FFDHE_3072
+        if (wc_InitDhKey_ex(key, HEAP_HINT, INVALID_DEVID) == 0){
+            ExpectIntEQ(wc_DhSetNamedKey(key, WC_FFDHE_3072), 0);
+            ExpectIntEQ(wc_DhGetNamedKeyMinSize(WC_FFDHE_3072), 34);
+            wc_FreeDhKey(key);
+        }
+        #endif
+        #ifdef HAVE_FFDHE_4096
+        if (wc_InitDhKey_ex(key, HEAP_HINT, INVALID_DEVID) == 0){
+            ExpectIntEQ(wc_DhSetNamedKey(key, WC_FFDHE_4096), 0);
+            ExpectIntEQ(wc_DhGetNamedKeyMinSize(WC_FFDHE_4096), 39);
+            wc_FreeDhKey(key);
+        }
+        #endif
+        #ifdef HAVE_FFDHE_6144
+        if (wc_InitDhKey_ex(key, HEAP_HINT, INVALID_DEVID) == 0){
+            ExpectIntEQ(wc_DhSetNamedKey(key, WC_FFDHE_6144), 0);
+            ExpectIntEQ(wc_DhGetNamedKeyMinSize(WC_FFDHE_6144), 46);
+            wc_FreeDhKey(key);
+        }
+        #endif
+        #ifdef HAVE_FFDHE_8192
+        if (wc_InitDhKey_ex(key, HEAP_HINT, INVALID_DEVID) == 0){
+            ExpectIntEQ(wc_DhSetNamedKey(key, WC_FFDHE_8192), 0);
+            ExpectIntEQ(wc_DhGetNamedKeyMinSize(WC_FFDHE_8192), 52);
+            wc_FreeDhKey(key);
+        }
+        #endif
+        XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    }
 #endif
     return EXPECT_RESULT();
 }
@@ -18924,8 +19004,9 @@ static int test_wc_i2d_PKCS12(void)
 static int test_wc_PKCS12_create_once(int keyEncType, int certEncType)
 {
     EXPECT_DECLS;
-#if !defined(NO_ASN) && defined(HAVE_PKCS12) && !defined(NO_PWDBASED) \
-    && !defined(NO_HMAC) && !defined(NO_CERTS) && defined(USE_CERT_BUFFERS_2048)
+#if !defined(NO_ASN) && defined(HAVE_PKCS12) && !defined(NO_PWDBASED) && \
+    !defined(NO_RSA) && !defined(NO_ASN_CRYPT) && \
+    !defined(NO_HMAC) && !defined(NO_CERTS) && defined(USE_CERT_BUFFERS_2048)
 
     byte* inKey = (byte*) server_key_der_2048;
     const word32 inKeySz= sizeof_server_key_der_2048;
@@ -18989,19 +19070,24 @@ static int test_wc_PKCS12_create(void)
 {
     EXPECT_DECLS;
 #if !defined(NO_DES3) && !defined(NO_SHA)
-    ExpectIntEQ(test_wc_PKCS12_create_once(PBE_SHA1_DES3, PBE_SHA1_DES3),
-        TEST_SUCCESS);
+    EXPECT_TEST(test_wc_PKCS12_create_once(PBE_SHA1_DES3, PBE_SHA1_DES3));
 #endif
-#if defined(HAVE_AES_CBC) && !defined(NO_AES_256) && !defined(NO_DES3) && \
-    !defined(NO_SHA)
-    ExpectIntEQ(test_wc_PKCS12_create_once(PBE_AES256_CBC, PBE_SHA1_DES3),
-        TEST_SUCCESS);
+#if defined(HAVE_AES_CBC) && !defined(NO_AES) && !defined(NO_AES_256) && \
+    !defined(NO_SHA) && defined(WOLFSSL_ASN_TEMPLATE)
+    /* Encoding certificate with PBE_AES256_CBC needs WOLFSSL_ASN_TEMPLATE */
+    EXPECT_TEST(test_wc_PKCS12_create_once(PBE_AES256_CBC, PBE_AES256_CBC));
 #endif
-#if defined(HAVE_AES_CBC) && !defined(NO_AES_128) && !defined(NO_DES3) && \
-    !defined(NO_SHA)
-    ExpectIntEQ(test_wc_PKCS12_create_once(PBE_AES128_CBC, PBE_SHA1_DES3),
-        TEST_SUCCESS);
+#if defined(HAVE_AES_CBC) && !defined(NO_AES) && !defined(NO_AES_128) && \
+    !defined(NO_SHA) && defined(WOLFSSL_ASN_TEMPLATE)
+    /* Encoding certificate with PBE_AES128_CBC needs WOLFSSL_ASN_TEMPLATE */
+    EXPECT_TEST(test_wc_PKCS12_create_once(PBE_AES128_CBC, PBE_AES128_CBC));
 #endif
+/* Testing a mixture of 2 algorithms */
+#if defined(HAVE_AES_CBC) && !defined(NO_AES) && !defined(NO_AES_256) && \
+    !defined(NO_SHA) && defined(WOLFSSL_ASN_TEMPLATE) && !defined(NO_DES3)
+    EXPECT_TEST(test_wc_PKCS12_create_once(PBE_AES256_CBC, PBE_SHA1_DES3));
+#endif
+
     (void) test_wc_PKCS12_create_once;
 
     return EXPECT_RESULT();
@@ -19617,10 +19703,12 @@ static int test_wolfSSL_i2c_ASN1_INTEGER(void)
     ExpectNotNull(pp = (unsigned char*)XMALLOC(ret + 1, NULL,
                 DYNAMIC_TYPE_TMP_BUFFER));
     tpp = pp;
-    ExpectNotNull(XMEMSET(tpp, 0, ret + 1));
-    ExpectIntEQ(i2c_ASN1_INTEGER(a, &tpp), 1);
-    tpp--;
-    ExpectIntEQ(*tpp, 40);
+    if (tpp != NULL) {
+        ExpectNotNull(XMEMSET(tpp, 0, ret + 1));
+        ExpectIntEQ(i2c_ASN1_INTEGER(a, &tpp), 1);
+        tpp--;
+        ExpectIntEQ(*tpp, 40);
+    }
     XFREE(pp, NULL, DYNAMIC_TYPE_TMP_BUFFER);
     pp = NULL;
 
@@ -30555,11 +30643,16 @@ static int test_wolfSSL_curves_mismatch(void)
     } test_params[] = {
 #ifdef WOLFSSL_TLS13
         {wolfTLSv1_3_client_method, wolfTLSv1_3_server_method, "TLS 1.3",
-                WC_NO_ERR_TRACE(FATAL_ERROR), WC_NO_ERR_TRACE(BAD_KEY_SHARE_DATA)},
+                /* Client gets error because server will attempt HRR */
+                WC_NO_ERR_TRACE(BAD_KEY_SHARE_DATA),
+                WC_NO_ERR_TRACE(FATAL_ERROR)
+        },
 #endif
 #ifndef WOLFSSL_NO_TLS12
         {wolfTLSv1_2_client_method, wolfTLSv1_2_server_method, "TLS 1.2",
                 WC_NO_ERR_TRACE(FATAL_ERROR),
+                /* Server gets error because <=1.2 doesn't have a mechanism
+                 * to negotiate curves. */
 #ifdef OPENSSL_EXTRA
                 WC_NO_ERR_TRACE(WOLFSSL_ERROR_SYSCALL)
 #else
@@ -40388,7 +40481,6 @@ static int test_wolfSSL_OPENSSL_hexstr2buf(void)
             ExpectIntEQ(expectedOutputs[i].buffer[j], returnedBuf[j]);
         }
         OPENSSL_free(returnedBuf);
-        returnedBuf = NULL;
     }
 #endif
     return EXPECT_RESULT();
@@ -67030,6 +67122,7 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wc_LoadStaticMemory_ex),
     TEST_DECL(test_wc_LoadStaticMemory_CTX),
 
+    TEST_DECL(test_wc_FreeCertList),
     /* Locking with Compat Mutex */
     TEST_DECL(test_wc_SetMutexCb),
     TEST_DECL(test_wc_LockMutex_ex),
@@ -67130,6 +67223,8 @@ TEST_CASE testCases[] = {
     TEST_MLDSA_DECLS,
     /* Signature API */
     TEST_SIGNATURE_DECLS,
+    /* x509 */
+    TEST_X509_DECLS,
 
     /* PEM and DER APIs. */
     TEST_DECL(test_wc_PemToDer),
@@ -68166,6 +68261,7 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_dtls12_missing_finished),
     TEST_DECL(test_dtls13_missing_finished_client),
     TEST_DECL(test_dtls13_missing_finished_server),
+    TEST_DECL(test_wolfSSL_dtls_set_pending_peer),
     TEST_DECL(test_tls13_pq_groups),
     TEST_DECL(test_tls13_early_data),
     TEST_DECL(test_tls_multi_handshakes_one_record),
@@ -68186,6 +68282,9 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_ocsp_certid_enc_dec),
     TEST_DECL(test_tls12_unexpected_ccs),
     TEST_DECL(test_tls13_unexpected_ccs),
+    TEST_DECL(test_tls12_curve_intersection),
+    TEST_DECL(test_tls13_curve_intersection),
+    TEST_DECL(test_wc_DhSetNamedKey),
     /* This test needs to stay at the end to clean up any caches allocated. */
     TEST_DECL(test_wolfSSL_Cleanup)
 };
