@@ -3749,6 +3749,7 @@ typedef int  (*CbCrlIO)(WOLFSSL_CRL* crl, const char* url, int urlSz);
 
 #ifdef HAVE_CRL_UPDATE_CB
 typedef struct CrlInfo {
+    byte crlNumber[CRL_MAX_NUM_SZ];
     byte *issuerHash;
     word32 issuerHashLen;
     byte *lastDate;
@@ -3757,7 +3758,7 @@ typedef struct CrlInfo {
     byte *nextDate;
     word32 nextDateMaxLen;
     byte nextDateFormat;
-    sword32 crlNumber;
+    byte crlNumberSet:1;
 } CrlInfo;
 
 typedef void (*CbUpdateCRL)(CrlInfo* old, CrlInfo* cnew);
@@ -4617,6 +4618,11 @@ enum {
      * https://github.com/open-quantum-safe/oqs-provider/blob/main/oqs-template/
      *      oqs-kem-info.md
      */
+#ifdef WOLFSSL_ML_KEM_USE_OLD_IDS
+    WOLFSSL_P256_ML_KEM_512_OLD   = 12103,
+    WOLFSSL_P384_ML_KEM_768_OLD   = 12104,
+    WOLFSSL_P521_ML_KEM_1024_OLD  = 12105,
+#endif
     WOLFSSL_P256_ML_KEM_512       = 12107,
     WOLFSSL_P384_ML_KEM_768       = 12108,
     WOLFSSL_P521_ML_KEM_1024      = 12109,
