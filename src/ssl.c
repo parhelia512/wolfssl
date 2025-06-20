@@ -297,30 +297,36 @@ WC_RNG* wolfssl_make_rng(WC_RNG* rng, int* local);
 WC_RNG* wolfssl_make_rng(WC_RNG* rng, int* local)
 {
     WC_RNG* ret = NULL;
-
-    /* Assume not local until one created. */
-    *local = 0;
-
 #ifdef WOLFSSL_SMALL_STACK
+    int freeRng = 0;
+
     /* Allocate RNG object . */
-    rng = (WC_RNG*)XMALLOC(sizeof(WC_RNG), NULL, DYNAMIC_TYPE_RNG);
+    if (rng == NULL) {
+        rng = (WC_RNG*)XMALLOC(sizeof(WC_RNG), NULL, DYNAMIC_TYPE_RNG);
+        freeRng = 1;
+    }
 #endif
-    /* Check we have a local RNG object and initialize. */
-    if ((rng != NULL) && (wc_InitRng(rng) == 0)) {
-        ret = rng;
-        *local = 1;
+
+    if (rng != NULL) {
+        if (wc_InitRng(rng) == 0) {
+            ret = rng;
+            *local = 1;
+        }
+        else {
+            WOLFSSL_MSG("Bad RNG Init");
+#ifdef WOLFSSL_SMALL_STACK
+            if (freeRng) {
+                XFREE(rng, NULL, DYNAMIC_TYPE_RNG);
+                rng = NULL;
+            }
+#endif
+        }
     }
     if (ret == NULL) {
-    #ifdef HAVE_GLOBAL_RNG
-        WOLFSSL_MSG("Bad RNG Init, trying global");
-    #endif
-        ret = wolfssl_make_global_rng();
-    }
-
-    if (ret != rng) {
-#ifdef WOLFSSL_SMALL_STACK
-        XFREE(rng, NULL, DYNAMIC_TYPE_RNG);
+#ifdef HAVE_GLOBAL_RNG
+        WOLFSSL_MSG("trying global RNG");
 #endif
+        ret = wolfssl_make_global_rng();
     }
 
     return ret;
@@ -6154,6 +6160,12 @@ int wolfSSL_Init(void)
 #endif
 
     WOLFSSL_ENTER("wolfSSL_Init");
+
+#if defined(LIBWOLFSSL_CMAKE_OUTPUT)
+    WOLFSSL_MSG(LIBWOLFSSL_CMAKE_OUTPUT);
+#else
+    WOLFSSL_MSG("No extra wolfSSL cmake messages found");
+#endif
 
 #ifndef WOLFSSL_MUTEX_INITIALIZER
     if (inits_count_mutex_valid == 0) {
@@ -12805,6 +12817,13 @@ cleanup:
         if (ssl == NULL)
             return 0;
 
+#if defined(WOLFSSL_DTLS13) && !defined(WOLFSSL_NO_CLIENT)
+        if (ssl->options.side == WOLFSSL_CLIENT_END && ssl->options.dtls
+                && IsAtLeastTLSv1_3(ssl->version)) {
+            return ssl->options.serverState == SERVER_FINISHED_ACKED;
+        }
+#endif /* WOLFSSL_DTLS13 && !WOLFSSL_NO_CLIENT */
+
         /* Can't use ssl->options.connectState and ssl->options.acceptState
          * because they differ in meaning for TLS <=1.2 and 1.3 */
         if (ssl->options.handShakeState == HANDSHAKE_DONE)
@@ -15591,6 +15610,10 @@ const char* wolfSSL_get_curve_name(WOLFSSL* ssl)
             return "ML_KEM_512";
         case WOLFSSL_P256_ML_KEM_512:
             return "P256_ML_KEM_512";
+#ifdef WOLFSSL_ML_KEM_USE_OLD_IDS
+        case WOLFSSL_P256_ML_KEM_512_OLD:
+            return "P256_ML_KEM_512_OLD";
+#endif
         #ifdef HAVE_CURVE25519
         case WOLFSSL_X25519_ML_KEM_512:
             return "X25519_ML_KEM_512";
@@ -15601,6 +15624,10 @@ const char* wolfSSL_get_curve_name(WOLFSSL* ssl)
             return "ML_KEM_768";
         case WOLFSSL_P384_ML_KEM_768:
             return "P384_ML_KEM_768";
+#ifdef WOLFSSL_ML_KEM_USE_OLD_IDS
+        case WOLFSSL_P384_ML_KEM_768_OLD:
+            return "P384_ML_KEM_768_OLD";
+#endif
         case WOLFSSL_P256_ML_KEM_768:
             return "P256_ML_KEM_768";
         #ifdef HAVE_CURVE25519
@@ -15617,6 +15644,10 @@ const char* wolfSSL_get_curve_name(WOLFSSL* ssl)
             return "ML_KEM_1024";
         case WOLFSSL_P521_ML_KEM_1024:
             return "P521_ML_KEM_1024";
+#ifdef WOLFSSL_ML_KEM_USE_OLD_IDS
+        case WOLFSSL_P521_ML_KEM_1024_OLD:
+            return "P521_ML_KEM_1024_OLD";
+#endif
         case WOLFSSL_P384_ML_KEM_1024:
             return "P384_ML_KEM_1024";
     #endif
@@ -25482,6 +25513,13 @@ static int wolfSSL_RAND_InitMutex(void)
 
 #ifdef OPENSSL_EXTRA
 
+#if defined(HAVE_GETPID) && !defined(WOLFSSL_NO_GETPID) && \
+    defined(HAVE_FIPS) && FIPS_VERSION3_LT(6,0,0)
+/* In older FIPS bundles add check for reseed here since it does not exist in
+ * the older random.c certified files. */
+static pid_t currentRandPid = 0;
+#endif
+
 /* Checks if the global RNG has been created. If not then one is created.
  *
  * Returns WOLFSSL_SUCCESS when no error is encountered.
@@ -25494,6 +25532,10 @@ int wolfSSL_RAND_Init(void)
         if (initGlobalRNG == 0) {
             ret = wc_InitRng(&globalRNG);
             if (ret == 0) {
+            #if defined(HAVE_GETPID) && !defined(WOLFSSL_NO_GETPID) && \
+                defined(HAVE_FIPS) && FIPS_VERSION3_LT(6,0,0)
+                currentRandPid = getpid();
+            #endif
                 initGlobalRNG = 1;
                 ret = WOLFSSL_SUCCESS;
             }
@@ -25928,8 +25970,8 @@ int wolfSSL_RAND_pseudo_bytes(unsigned char* buf, int num)
     return ret;
 }
 
-/* returns WOLFSSL_SUCCESS if the bytes generated are valid otherwise
- * WOLFSSL_FAILURE */
+/* returns WOLFSSL_SUCCESS (1) if the bytes generated are valid otherwise 0
+ * on failure */
 int wolfSSL_RAND_bytes(unsigned char* buf, int num)
 {
     int     ret = 0;
@@ -25971,6 +26013,26 @@ int wolfSSL_RAND_bytes(unsigned char* buf, int num)
          * have the lock.
          */
         if (initGlobalRNG) {
+        #if defined(HAVE_GETPID) && !defined(WOLFSSL_NO_GETPID) && \
+                defined(HAVE_FIPS) && FIPS_VERSION3_LT(6,0,0)
+            pid_t p;
+
+            p = getpid();
+            if (p != currentRandPid) {
+                wc_UnLockMutex(&globalRNGMutex);
+                if (wolfSSL_RAND_poll() != WOLFSSL_SUCCESS) {
+                    WOLFSSL_MSG("Issue with check pid and reseed");
+                    ret = WOLFSSL_FAILURE;
+                }
+
+                /* reclaim lock after wolfSSL_RAND_poll */
+                if (wc_LockMutex(&globalRNGMutex) != 0) {
+                    WOLFSSL_MSG("Bad Lock Mutex rng");
+                    return ret;
+                }
+                currentRandPid = p;
+            }
+        #endif
             rng = &globalRNG;
             used_global = 1;
         }
@@ -26041,11 +26103,35 @@ int wolfSSL_RAND_poll(void)
         return  WOLFSSL_FAILURE;
     }
     ret = wc_GenerateSeed(&globalRNG.seed, entropy, entropy_sz);
-    if (ret != 0){
+    if (ret != 0) {
         WOLFSSL_MSG("Bad wc_RNG_GenerateBlock");
         ret = WOLFSSL_FAILURE;
-    }else
+    }
+    else {
+#ifdef HAVE_HASHDRBG
+        if (wc_LockMutex(&globalRNGMutex) != 0) {
+            WOLFSSL_MSG("Bad Lock Mutex rng");
+            return ret;
+        }
+
+        ret = wc_RNG_DRBG_Reseed(&globalRNG, entropy, entropy_sz);
+        if (ret != 0) {
+            WOLFSSL_MSG("Error reseeding DRBG");
+            ret = WOLFSSL_FAILURE;
+        }
+        else {
+            ret = WOLFSSL_SUCCESS;
+        }
+        wc_UnLockMutex(&globalRNGMutex);
+#elif defined(HAVE_INTEL_RDRAND)
+        WOLFSSL_MSG("Not polling with RAND_poll, RDRAND used without "
+                    "HAVE_HASHDRBG");
         ret = WOLFSSL_SUCCESS;
+#else
+        WOLFSSL_MSG("RAND_poll called with HAVE_HASHDRBG not set");
+        ret = WOLFSSL_FAILURE;
+#endif
+    }
 
     return ret;
 }
@@ -26683,4 +26769,3 @@ void wolfSSL_FIPS_drbg_set_app_data(WOLFSSL_DRBG_CTX *ctx, void *app_data)
 
 
 #endif /* !WOLFCRYPT_ONLY */
-
