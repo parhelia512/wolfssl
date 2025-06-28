@@ -171,10 +171,6 @@ static int Renesas_cmn_CryptoDevCb(int devIdArg, wc_CryptoInfo* info, void* ctx)
     if (info == NULL || ctx == NULL)
         return BAD_FUNC_ARG;
 
-#if defined(DEBUG_WOLFSSL)
-    printf("CryptoDevCb: Algo Type %d session key set: %d\n",
-                                    info->algo_type, cbInfo->session_key_set);
-#endif
 #if defined(DEBUG_CRYPTOCB)
     wc_CryptoCb_InfoString(info);
 #endif
@@ -258,7 +254,8 @@ static int Renesas_cmn_CryptoDevCb(int devIdArg, wc_CryptoInfo* info, void* ctx)
             if (ret == 0) {
                 TsipUserCtx* tsipCtx = (TsipUserCtx*)ctx;
                 RsaKey* key = info->pk.rsakg.key;
-            #if defined(TSIP_RSAES_1024) && TSIP_RSAES_1024 == 1
+            #if (defined(TSIP_RSAES_1024) && TSIP_RSAES_1024 == 1) || \
+                (defined(TSIP_RSASSA_1024) && TSIP_RSASSA_1024 == 1)
                 if (info->pk.rsakg.size == 1024) {
                     /* export generated public key to the RsaKey structure */
                     ret = wc_RsaPublicKeyDecodeRaw(
@@ -270,7 +267,8 @@ static int Renesas_cmn_CryptoDevCb(int devIdArg, wc_CryptoInfo* info, void* ctx)
                     );
                 }
             #endif
-            #if defined(TSIP_RSAES_2048) && TSIP_RSAES_2048 == 1
+            #if (defined(TSIP_RSAES_2048) && TSIP_RSAES_2048 == 1) || \
+                (defined(TSIP_RSASSA_2048) && TSIP_RSASSA_2048 == 1)
                 if (info->pk.rsakg.size == 2048) {
                     /* export generated public key to the RsaKey structure */
                     ret = wc_RsaPublicKeyDecodeRaw(
@@ -828,14 +826,27 @@ static int Renesas_cmn_EncryptKeys(WOLFSSL* ssl, void* ctx)
     TsipUserCtx* cbInfo = (TsipUserCtx*)ctx;
 
     if (cbInfo->session_key_set == 1) {
+        switch(cbInfo->key_side) {
  #elif defined(WOLFSSL_RENESAS_FSPSM_TLS)
     FSPSM_ST* cbInfo = (FSPSM_ST*)ctx;
 
-
     if (cbInfo->keyflgs_tls.bits.session_key_set == 1) {
+        switch(cbInfo->side) {
  #endif
-        ret = 0;
+            case 1:/* ENCRYPT_SIDE_ONLY */
+                ssl->encrypt.setup = 1;
+                break;
+            case 2:/* DECRYPT_SIDE_ONLY */
+                ssl->decrypt.setup = 1;
+                break;
+            case 3:/* ENCRYPT AND DECRYPT */
+                ssl->decrypt.setup = 1;
+                ssl->encrypt.setup = 1;
+                break;
+            default:break;
+        }
 
+        ret = 0;
         wolfSSL_CTX_SetTlsFinishedCb(ssl->ctx, Renesas_cmn_TlsFinished);
         wolfSSL_SetTlsFinishedCtx(ssl, cbInfo);
     }
