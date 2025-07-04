@@ -455,6 +455,10 @@
     #endif
 #endif
 
+/* Important build-time configuration messages may be saved.
+ * Enable DEBUG_WOLFSSL and see wolfSSL_Init() for display. */
+#define LIBWOLFSSL_CMAKE_OUTPUT ""
+
 /* ---------------------------------------------------------------------------
  * Dual Algorithm Certificate Required Features.
  * ---------------------------------------------------------------------------
@@ -2106,7 +2110,8 @@ extern void uITRON4_free(void *p) ;
     defined(WOLFSSL_STM32G0)  || defined(WOLFSSL_STM32U5)   || \
     defined(WOLFSSL_STM32H5)  || defined(WOLFSSL_STM32WL)   || \
     defined(WOLFSSL_STM32G4)  || defined(WOLFSSL_STM32MP13) || \
-    defined(WOLFSSL_STM32H7S) || defined(WOLFSSL_STM32WBA)
+    defined(WOLFSSL_STM32H7S) || defined(WOLFSSL_STM32WBA)  || \
+    defined(WOLFSSL_STM32N6)
 
     #define SIZEOF_LONG_LONG 8
     #ifndef CHAR_BIT
@@ -2170,6 +2175,8 @@ extern void uITRON4_free(void *p) ;
             #include "stm32u5xx_hal.h"
         #elif defined(WOLFSSL_STM32H5)
             #include "stm32h5xx_hal.h"
+        #elif defined(WOLFSSL_STM32N6)
+            #include "stm32n6xx_hal.h"
         #elif defined(WOLFSSL_STM32MP13)
             /* HAL headers error on our ASM files */
             #ifndef __ASSEMBLER__
@@ -2897,7 +2904,7 @@ extern void uITRON4_free(void *p) ;
 /* Determine when mp_read_radix with a radix of 10 is required. */
 #if (defined(WOLFSSL_SP_MATH_ALL) && !defined(NO_RSA) && \
     !defined(WOLFSSL_RSA_VERIFY_ONLY)) || defined(HAVE_ECC) || \
-    !defined(NO_DSA) || defined(OPENSSL_EXTRA)
+    !defined(NO_DSA) || defined(OPENSSL_EXTRA) || defined(WOLFSSL_PUBLIC_MP)
     #define WOLFSSL_SP_READ_RADIX_16
 #endif
 
@@ -2910,7 +2917,7 @@ extern void uITRON4_free(void *p) ;
 /* Determine when mp_invmod is required. */
 #if defined(HAVE_ECC) || !defined(NO_DSA) || defined(OPENSSL_EXTRA) || \
     (!defined(NO_RSA) && !defined(WOLFSSL_RSA_VERIFY_ONLY) && \
-     !defined(WOLFSSL_RSA_PUBLIC_ONLY))
+     !defined(WOLFSSL_RSA_PUBLIC_ONLY)) || defined(OPENSSL_EXTRA)
     #define WOLFSSL_SP_INVMOD
 #endif
 
@@ -3671,6 +3678,9 @@ extern void uITRON4_free(void *p) ;
     #undef WOLFSSL_HAVE_MAX
     #undef WOLFSSL_HAVE_ASSERT_H
     #define WOLFSSL_NO_ASSERT_H
+    #ifndef WOLFSSL_NO_GETPID
+        #define WOLFSSL_NO_GETPID
+    #endif /* WOLFSSL_NO_GETPID */
     #ifndef SIZEOF_LONG
         #define SIZEOF_LONG         8
     #endif
@@ -3720,6 +3730,14 @@ extern void uITRON4_free(void *p) ;
         #ifndef WC_SANITIZE_ENABLE
             #define WC_SANITIZE_ENABLE() kasan_enable_current()
         #endif
+    #endif
+
+    #if !defined(WC_RESEED_INTERVAL) && defined(LINUXKM_LKCAPI_REGISTER)
+        /* If installing handlers, use the maximum reseed interval allowed by
+         * NIST SP 800-90A Rev. 1, to avoid unnecessary delays in DRBG
+         * generation.
+         */
+        #define WC_RESEED_INTERVAL (((word64)1UL)<<48UL)
     #endif
 #endif
 
@@ -3906,7 +3924,7 @@ extern void uITRON4_free(void *p) ;
 /* Parts of the openssl compatibility layer require peer certs */
 #if (defined(OPENSSL_EXTRA) || defined(OPENSSL_ALL) || \
      defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY) || \
-     defined(HAVE_LIGHTY)) && !defined(NO_CERTS)
+     defined(HAVE_LIGHTY)) && !defined(NO_CERTS) && !defined(NO_KEEP_PEER_CERT)
     #undef  KEEP_PEER_CERT
     #define KEEP_PEER_CERT
 #endif
@@ -3977,12 +3995,6 @@ extern void uITRON4_free(void *p) ;
 #if defined(HAVE_XCHACHA) && !defined(HAVE_CHACHA)
     /* XChacha requires ChaCha */
     #undef HAVE_XCHACHA
-#endif
-
-#if !defined(WOLFSSL_SHA384) && !defined(WOLFSSL_SHA512) && defined(NO_AES) && \
-                                                          !defined(WOLFSSL_SHA3)
-    #undef  WOLFSSL_NO_WORD64_OPS
-    #define WOLFSSL_NO_WORD64_OPS
 #endif
 
 #if !defined(WOLFCRYPT_ONLY) && \

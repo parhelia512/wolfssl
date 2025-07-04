@@ -1572,7 +1572,20 @@ WOLFSSL_API word32 CheckRunTimeSettings(void);
     #if __WATCOMC__ < 1300
         #define _WCCALLBACK
     #endif
-    #if defined(__NT__)
+    #if defined(__MACH__)
+        #include <dispatch/dispatch.h>
+        #include <pthread.h>
+        typedef struct COND_TYPE {
+            dispatch_semaphore_t cond;
+        } COND_TYPE;
+        typedef void*         THREAD_RETURN;
+        typedef pthread_t     THREAD_TYPE;
+        #define WOLFSSL_COND
+        #define WOLFSSL_THREAD
+        #ifndef HAVE_SELFTEST
+            #define WOLFSSL_THREAD_NO_JOIN
+        #endif
+    #elif defined(__NT__)
         typedef unsigned      THREAD_RETURN;
         typedef uintptr_t     THREAD_TYPE;
         typedef struct COND_TYPE {
@@ -1951,6 +1964,22 @@ WOLFSSL_API word32 CheckRunTimeSettings(void);
 #ifndef RESTORE_VECTOR_REGISTERS
     #define RESTORE_VECTOR_REGISTERS() WC_DO_NOTHING
 #endif
+#ifdef WOLFSSL_NO_ASM
+    /* We define fallback no-op definitions for these only if asm is disabled,
+     * otherwise the using code must detect that these macros are undefined and
+     * provide its own non-vector implementation paths.
+     *
+     * Currently these macros are only used in WOLFSSL_LINUXKM code paths, which
+     * are always compiled either with substantive definitions from
+     * linuxkm_wc_port.h, or with WOLFSSL_NO_ASM defined.
+     */
+    #ifndef DISABLE_VECTOR_REGISTERS
+        #define DISABLE_VECTOR_REGISTERS() 0
+    #endif
+    #ifndef REENABLE_VECTOR_REGISTERS
+        #define REENABLE_VECTOR_REGISTERS() WC_DO_NOTHING
+    #endif
+#endif
 
 #ifndef WC_SANITIZE_DISABLE
     #define WC_SANITIZE_DISABLE() WC_DO_NOTHING
@@ -2021,7 +2050,7 @@ enum Max_ASN {
     MAX_SIG_SZ          = 256,
     MAX_ALGO_SZ         =  20,
     MAX_LENGTH_SZ       = WOLFSSL_ASN_MAX_LENGTH_SZ, /* Max length size for DER encoding */
-    MAX_SHORT_SZ        = (1 + MAX_LENGTH_SZ),     /* asn int + byte len + 4 byte length */
+    MAX_SHORT_SZ        = (1 + 1 + 5), /* asn int + byte len + 5 byte length */
     MAX_SEQ_SZ          = (1 + MAX_LENGTH_SZ), /* enum(seq | con) + length(5) */
     MAX_SET_SZ          = (1 + MAX_LENGTH_SZ), /* enum(set | con) + length(5) */
     MAX_OCTET_STR_SZ    = (1 + MAX_LENGTH_SZ), /* enum(set | con) + length(5) */
@@ -2050,7 +2079,12 @@ enum Max_ASN {
                             /* Maximum DER digest ASN header size */
                             /* Max X509 header length indicates the
                              * max length + 2 ('\n', '\0') */
+#if defined(HAVE_FALCON) || defined(HAVE_DILITHIUM) || defined(HAVE_SPHINCS)
+    MAX_X509_HEADER_SZ  = (48 + 2), /* Maximum PEM Header/Footer Size */
+#else
     MAX_X509_HEADER_SZ  = (37 + 2), /* Maximum PEM Header/Footer Size */
+#endif
+
 #if defined(HAVE_FALCON) || defined(HAVE_DILITHIUM)
     MAX_PUBLIC_KEY_SZ   = MAX_PQC_PUBLIC_KEY_SZ + MAX_ALGO_SZ + MAX_SEQ_SZ * 2,
 #else
@@ -2063,10 +2097,14 @@ enum Max_ASN {
 #endif
 };
 
+#ifndef WC_MAX_DIGEST_SIZE
+#define WC_MAX_DIGEST_SIZE 64
+#endif
+#ifndef WC_MAX_BLOCK_SIZE
+#define WC_MAX_BLOCK_SIZE  128
+#endif
+
 #ifdef WOLFSSL_CERT_GEN
-    #ifdef WOLFSSL_NO_MALLOC
-    #include "wolfssl/wolfcrypt/hash.h" /* for max sizes */
-    #endif
     /* Used in asn.c MakeSignature for ECC and RSA non-blocking/async */
     enum CertSignState {
         CERTSIGN_STATE_BEGIN,
