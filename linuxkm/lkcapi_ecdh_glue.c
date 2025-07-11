@@ -58,14 +58,6 @@
 #include <wolfssl/wolfcrypt/ecc.h>
 #include <crypto/ecdh.h>
 
-/* need misc.c for ForceZero(). */
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
-    #define WOLFSSL_MISC_INCLUDED
-    #include <wolfcrypt/src/misc.c>
-#endif
-
 #define WOLFKM_ECDH_DRIVER       ("ecdh-wolfcrypt")
 
 #define WOLFKM_ECDH_P192_NAME    ("ecdh-nist-p192")
@@ -542,7 +534,6 @@ ecdh_gen_pub_end:
     #ifdef WOLFKM_DEBUG_ECDH
     pr_info("info: exiting km_ecdh_gen_pub: %d", err);
     #endif /* WOLFKM_DEBUG_ECDH */
-
     return err;
 }
 
@@ -725,7 +716,6 @@ static int linuxkm_test_ecdh_nist_p192(void)
                                        b_pub, expected_a_pub, sizeof(b_pub),
                                        secret, sizeof(secret),
                                        shared_secret, sizeof(shared_secret));
-
     return rc;
 }
 #endif /* LINUXKM_ECC192 */
@@ -785,7 +775,6 @@ static int linuxkm_test_ecdh_nist_p256(void)
                                        b_pub, expected_a_pub, sizeof(b_pub),
                                        secret, sizeof(secret),
                                        shared_secret, sizeof(shared_secret));
-
     return rc;
 }
 
@@ -857,7 +846,6 @@ static int linuxkm_test_ecdh_nist_p384(void)
                                        b_pub, expected_a_pub, sizeof(b_pub),
                                        secret, sizeof(secret),
                                        shared_secret, sizeof(shared_secret));
-
     return rc;
 }
 
@@ -885,12 +873,23 @@ static int linuxkm_test_ecdh_nist_driver(const char * driver,
      */
     tfm = crypto_alloc_kpp(driver, 0, 0);
     if (IS_ERR(tfm)) {
-        pr_err("error: allocating kpp algorithm %s failed: %ld\n",
-               driver, PTR_ERR(tfm));
-        if (PTR_ERR(tfm) == -ENOMEM)
-            test_rc = MEMORY_E;
+        #if defined(HAVE_FIPS) && defined(CONFIG_CRYPTO_MANAGER) && \
+            !defined(CONFIG_CRYPTO_MANAGER_DISABLE_TESTS)
+        if ((PTR_ERR(tfm) == -ENOENT) && fips_enabled) {
+            pr_info("info: skipping unsupported kpp algorithm %s: %ld\n",
+                    driver, PTR_ERR(tfm));
+            test_rc = NOT_COMPILED_IN;
+        }
         else
-            test_rc = BAD_FUNC_ARG;
+        #endif
+        {
+            pr_err("error: allocating kpp algorithm %s failed: %ld\n",
+                   driver, PTR_ERR(tfm));
+            if (PTR_ERR(tfm) == -ENOMEM)
+                test_rc = MEMORY_E;
+            else
+                test_rc = BAD_FUNC_ARG;
+        }
         tfm = NULL;
         goto test_ecdh_nist_end;
     }
@@ -988,7 +987,6 @@ test_ecdh_nist_end:
     #ifdef WOLFKM_DEBUG_ECDH
     pr_info("info: %s: self test returned: %d\n", driver, test_rc);
     #endif /* WOLFKM_DEBUG_ECDH */
-
     return test_rc;
 }
 

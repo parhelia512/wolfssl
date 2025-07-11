@@ -5102,7 +5102,7 @@ static void _sp_init_size(sp_int* a, unsigned int size)
 #endif
     _sp_zero((sp_int*)am);
 
-    a->size = (sp_size_t)size;
+    am->size = (sp_size_t)size;
 }
 
 /* Initialize the multi-precision number to be zero with a given max size.
@@ -5241,7 +5241,7 @@ int sp_grow(sp_int* a, int l)
 #endif /* (!NO_RSA && !WOLFSSL_RSA_VERIFY_ONLY) || !NO_DH || HAVE_ECC */
 
 #if (!defined(NO_RSA) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) || \
-    defined(HAVE_ECC)
+    defined(HAVE_ECC) || defined(WOLFSSL_PUBLIC_MP)
 /* Set the multi-precision number to zero.
  *
  * @param  [out]  a  SP integer to set to zero.
@@ -5826,7 +5826,7 @@ int sp_cmp_ct(const sp_int* a, const sp_int* b, unsigned int n)
 
 #if (!defined(NO_RSA) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) || \
     ((defined(WOLFSSL_SP_MATH_ALL) || defined(WOLFSSL_SP_SM2)) && \
-     defined(HAVE_ECC)) || defined(OPENSSL_EXTRA)
+     defined(HAVE_ECC)) || defined(OPENSSL_EXTRA) || defined(WOLFSSL_PUBLIC_MP)
 /* Check if a bit is set
  *
  * When a is NULL, result is 0.
@@ -7600,7 +7600,7 @@ static void _sp_add_off(const sp_int* a, const sp_int* b, sp_int* r, int o)
  * @param  [in]   o  Number of digits to offset b.
  */
 static void _sp_sub_off(const sp_int* a, const sp_int* b, sp_int* r,
-    unsigned int o)
+    sp_size_t o)
 {
     sp_size_t i = 0;
     sp_size_t j;
@@ -7618,7 +7618,7 @@ static void _sp_sub_off(const sp_int* a, const sp_int* b, sp_int* r,
         }
     }
     else {
-        i = (sp_size_t)o;
+        i = o;
     }
     /* Index to add at is the offset now. */
 
@@ -8025,8 +8025,8 @@ static void sp_clamp_ct(sp_int* a)
             (sp_int_digit)((sp_int_sdigit)(negVal & minusOne) >>
                            (SP_WORD_SIZE - 1));
 #else
-        sp_int_digit zeroMask =
-            (sp_int_digit)((((sp_int_sword)a->dp[i]) - 1) >> SP_WORD_SIZE);
+        sp_size_t zeroMask =
+            (sp_size_t)((((sp_int_sword)a->dp[i]) - 1) >> SP_WORD_SIZE);
 #endif
         mask &= (sp_size_t)zeroMask;
         used = (sp_size_t)(used + mask);
@@ -19271,18 +19271,15 @@ static int _sp_prime_trials(const sp_int* a, int trials, int* result)
 {
     int err = MP_OKAY;
     int i;
-    sp_int* n1;
-    sp_int* r;
-    DECL_SP_INT_ARRAY(t, a->used + 1, 2);
+    DECL_SP_INT(n1, a->used + 1);
+    DECL_SP_INT(r, a->used + 1);
     DECL_SP_INT(b, a->used * 2 + 1);
 
-    ALLOC_SP_INT_ARRAY(t, a->used + 1, 2, err, NULL);
+    ALLOC_SP_INT(n1, a->used + 1, err, NULL);
+    ALLOC_SP_INT(r, a->used + 1, err, NULL);
     /* Allocate number that will hold modular exponentiation result. */
     ALLOC_SP_INT(b, a->used * 2 + 1, err, NULL);
     if (err == MP_OKAY) {
-        n1 = t[0];
-        r  = t[1];
-
         _sp_init_size(n1, a->used + 1U);
         _sp_init_size(r, a->used + 1U);
         _sp_init_size(b, (sp_size_t)(a->used * 2U + 1U));
@@ -19305,7 +19302,8 @@ static int _sp_prime_trials(const sp_int* a, int trials, int* result)
 
     /* Free allocated temporary. */
     FREE_SP_INT(b, NULL);
-    FREE_SP_INT_ARRAY(t, NULL);
+    FREE_SP_INT(r, NULL);
+    FREE_SP_INT(n1, NULL);
     return err;
 }
 

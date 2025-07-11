@@ -164,7 +164,11 @@ struct OS_Seed {
 
 #ifdef HAVE_HASHDRBG
 struct DRBG_internal {
+    #ifdef WORD64_AVAILABLE
+    word64 reseedCtr;
+    #else
     word32 reseedCtr;
+    #endif
     byte V[DRBG_SEED_LEN];
     byte C[DRBG_SEED_LEN];
     void* heap;
@@ -188,6 +192,9 @@ struct WC_RNG {
     struct DRBG_internal drbg_data;
 #endif
     byte status;
+#endif
+#if defined(HAVE_GETPID) && !defined(WOLFSSL_NO_GETPID)
+    pid_t pid;
 #endif
 #ifdef WOLFSSL_ASYNC_CRYPT
     WC_ASYNC_DEV asyncDev;

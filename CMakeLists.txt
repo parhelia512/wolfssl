@@ -124,6 +124,7 @@ check_function_exists("memset" HAVE_MEMSET)
 check_function_exists("socket" HAVE_SOCKET)
 check_function_exists("strftime" HAVE_STRFTIME)
 check_function_exists("__atomic_fetch_add" HAVE_C___ATOMIC)
+check_function_exists("getpid" HAVE_GETPID)
 
 include(CheckSymbolExists)
 check_symbol_exists(isascii "ctype.h" HAVE_ISASCII)
@@ -434,6 +435,7 @@ if(WOLFSSL_CURL)
     set(WOLFSSL_MD4 "yes")
     set(WOLFSSL_DES3 "yes")
     set(WOLFSSL_ALPN "yes")
+    set(WOLFSSL_EX_DATA "yes")
     set(WOLFSSL_WOLFSSH "yes")
     set(WOLFSSL_OPENSSLEXTRA "yes")
     set(WOLFSSL_CRL "yes")
@@ -1155,8 +1157,8 @@ endif()
 
 # Old TLS
 add_option("WOLFSSL_OLD_TLS"
-    "Enable old TLS versions < 1.2 (default: enabled)"
-    "yes" "yes;no")
+    "Enable old TLS versions < 1.2 (default: disabled)"
+    "no" "yes;no")
 
 if(NOT WOLFSSL_OLD_TLS)
     list(APPEND WOLFSSL_DEFINITIONS "-DNO_OLD_TLS")
@@ -1407,17 +1409,25 @@ if(WOLFSSL_OPENSSH OR WOLFSSL_WPAS)
 endif()
 
 # MD5
-set(WOLFSSL_MD5_HELP_STRING "Enable MD5 (default: enabled)")
-add_option("WOLFSSL_MD5" ${WOLFSSL_MD5_HELP_STRING} "yes" "yes;no")
+set(WOLFSSL_MD5_HELP_STRING "Enable MD5 (default: disabled)")
+add_option("WOLFSSL_MD5" ${WOLFSSL_MD5_HELP_STRING} "no" "yes;no")
+
+if(WOLFSSL_WPAS OR
+   WOLFSSL_HAPROXY OR
+   WOLFSSL_NGINX OR
+   WOLFSSL_OPENSSH OR
+   WOLFSSL_OPENSSLEXTRA OR
+   WOLFSSL_OPENVPN OR
+   WOLFSSL_OLD_TLS OR
+   WOLFSSL_FORTRESS OR
+   WOLFSSL_LIGHTY OR
+   WOLFSSL_DES3 OR
+   WOLFSSL_OPENSSLALL)
+    override_cache(WOLFSSL_MD5 "yes")
+endif()
 
 if(NOT WOLFSSL_MD5)
     list(APPEND WOLFSSL_DEFINITIONS "-DNO_MD5" "-DNO_OLD_TLS")
-else()
-    # turn off MD5 if leanpsk or leantls on
-    if(WOLFSSL_LEAN_PSK OR WOLFSSL_LEAN_TLS)
-        list(APPEND WOLFSSL_DEFINITIONS "-DNO_MD5" "-DNO_OLD_TLS")
-        override_cache(WOLFSSL_MD5 "no")
-    endif()
 endif()
 
 # SHA
@@ -2084,6 +2094,7 @@ if(WOLFSSL_TPM)
     override_cache(WOLFSSL_CERTEXT  "yes")
     override_cache(WOLFSSL_PKCS7    "yes")
     override_cache(WOLFSSL_AESCFB   "yes")
+    list(APPEND WOLFSSL_DEFINITIONS "-DWOLFSSL_ALLOW_ENCODING_CA_FALSE")
 endif()
 
 if(WOLFSSL_CLU)
@@ -2634,6 +2645,8 @@ if(WOLFSSL_EXAMPLES)
         tests/api/test_evp.c
         tests/api/test_tls_ext.c
         tests/api/test_tls.c
+        tests/api/test_x509.c
+        tests/api/test_asn.c
         tests/srp.c
         tests/suites.c
         tests/w64wrapper.c

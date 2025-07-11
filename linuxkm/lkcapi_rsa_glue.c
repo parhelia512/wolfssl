@@ -719,6 +719,7 @@ static int km_direct_rsa_enc(struct akcipher_request *req)
 rsa_enc_out:
     if (enc != NULL) { free(enc); enc = NULL; }
     if (dec != NULL) { free(dec); dec = NULL; }
+
     #ifdef WOLFKM_DEBUG_RSA
     pr_info("info: exiting km_direct_rsa_enc\n");
     #endif /* WOLFKM_DEBUG_RSA */
@@ -937,9 +938,7 @@ static int km_rsa_set_pub(struct crypto_akcipher *tfm, const void *key,
 static unsigned int km_rsa_max_size(struct crypto_akcipher *tfm)
 {
     struct km_rsa_ctx * ctx = NULL;
-
     ctx = akcipher_tfm_ctx(tfm);
-
     return (unsigned int) ctx->key_len;
 }
 
@@ -1134,7 +1133,6 @@ pkcs1pad_sign_out:
     pr_info("info: exiting km_pkcs1pad_sign msg_len %d, enc_msg_len %d,"
             " sig_len %d, err %d", req->src_len, enc_len, sig_len, err);
     #endif /* WOLFKM_DEBUG_RSA */
-
     return err;
 }
 
@@ -1254,12 +1252,9 @@ pkcs1pad_verify_out:
 }
 #else
 
-/* note on sig_alg callbacks:
- * crypto_register_sig() errors out if alg->key_size is not set.
- *
- * alg->key_size:    required
- * alg->max_size:    optional (alg->max_size = alg->key_size)
- * alg->digest_size: optional (alg->digest_size = alg->key_size)
+/* Returns the rsa key size:
+ *   linux kernel version <  6.15.3: returns key size in bytes.
+ *   linux kernel version >= 6.15.3: returns key size in bits.
  * */
 static unsigned int km_pkcs1_key_size(struct crypto_sig *tfm)
 {
@@ -1267,7 +1262,11 @@ static unsigned int km_pkcs1_key_size(struct crypto_sig *tfm)
 
     ctx = crypto_sig_ctx(tfm);
 
+    #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 3)
+    return (unsigned int) ctx->key_len * WOLFSSL_BIT_SIZE;
+    #else
     return (unsigned int) ctx->key_len;
+    #endif /* linux >= 6.15.3 */
 }
 
 /*
@@ -1378,7 +1377,6 @@ pkcs1_sign_out:
     pr_info("info: exiting km_pkcs1_sign msg_len %d, enc_msg_len %d,"
             " sig_len %d, err %d", slen, enc_msg_len, sig_len, err);
     #endif /* WOLFKM_DEBUG_RSA */
-
     return err;
 }
 
@@ -2074,7 +2072,19 @@ static int linuxkm_test_rsa_driver(const char * driver, int nbits)
     }
     #endif /* WC_RSA_BLINDING */
 
-    ret = wc_MakeRsaKey(key, nbits, WC_RSA_EXPONENT, &rng);
+    #ifdef HAVE_FIPS
+    for (;;) {
+    #endif
+        ret = wc_MakeRsaKey(key, nbits, WC_RSA_EXPONENT, &rng);
+    #ifdef HAVE_FIPS
+        /* Retry if not prime. */
+        if (ret == WC_NO_ERR_TRACE(PRIME_GEN_E)) {
+            continue;
+        }
+        break;
+    }
+    #endif
+
     if (ret) {
         pr_err("error: make rsa key returned: %d\n", ret);
         goto test_rsa_end;
@@ -2430,7 +2440,19 @@ static int linuxkm_test_pkcs1pad_driver(const char * driver, int nbits,
     }
     #endif /* WC_RSA_BLINDING */
 
-    ret = wc_MakeRsaKey(key, nbits, WC_RSA_EXPONENT, &rng);
+    #ifdef HAVE_FIPS
+    for (;;) {
+    #endif
+        ret = wc_MakeRsaKey(key, nbits, WC_RSA_EXPONENT, &rng);
+    #ifdef HAVE_FIPS
+        /* Retry if not prime. */
+        if (ret == WC_NO_ERR_TRACE(PRIME_GEN_E)) {
+            continue;
+        }
+        break;
+    }
+    #endif
+
     if (ret) {
         pr_err("error: make rsa key returned: %d\n", ret);
         test_rc = ret;
@@ -2928,7 +2950,19 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     }
     #endif /* WC_RSA_BLINDING */
 
-    ret = wc_MakeRsaKey(key, nbits, WC_RSA_EXPONENT, &rng);
+    #ifdef HAVE_FIPS
+    for (;;) {
+    #endif
+        ret = wc_MakeRsaKey(key, nbits, WC_RSA_EXPONENT, &rng);
+    #ifdef HAVE_FIPS
+        /* Retry if not prime. */
+        if (ret == WC_NO_ERR_TRACE(PRIME_GEN_E)) {
+            continue;
+        }
+        break;
+    }
+    #endif
+
     if (ret) {
         pr_err("error: make rsa key returned: %d\n", ret);
         test_rc = ret;
@@ -3091,10 +3125,24 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     }
 
     {
-        /* all three of these should return the same value for pkcs1. */
+        /* The behavior of crypto_sig_Xsize (X= max, key, digest) changed
+         * at linux kernel v6.15.3:
+         *   <  6.15.3: all three should return the same value (in bytes).
+         *   >= 6.15.3: keysize is in bits, maxsize and digestsize in bytes. */
         unsigned int maxsize = crypto_sig_maxsize(tfm);
         unsigned int keysize = crypto_sig_keysize(tfm);
         unsigned int digestsize = crypto_sig_digestsize(tfm);
+
+        #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 3)
+        keysize = ((keysize + WOLFSSL_BIT_SIZE - 1) / WOLFSSL_BIT_SIZE);
+        #endif /* linux >= 6.15.3 */
+
+        #ifdef WOLFKM_DEBUG_RSA
+        pr_info("info: crypto_sig_{max, key, digest}size: "
+                "{%d, %d, %d}\n",
+                 maxsize, keysize, digestsize);
+        #endif /* WOLFKM_DEBUG_RSA */
+
         if (maxsize != key_len ||
             keysize != key_len ||
             digestsize != key_len) {
